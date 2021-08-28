@@ -2,21 +2,20 @@
 // based on the example from:
 // https://github.com/brendanzab/gl-rs/blob/master/gl/examples/triangle.rs
 
-use gl;
 use gl::types::*;
 use std::ffi::CString;
 use std::mem;
 use std::ptr;
 use std::str;
 
-const VS_SRC: &'static str = "
+const VS_SRC: &str = "
 #version 150
 in vec2 position;
 void main() {
     gl_Position = vec4(position, 0.0, 1.0);
 }";
 
-const FS_SRC: &'static str = "
+const FS_SRC: &str = "
 #version 150
 out vec4 out_color;
 void main() {

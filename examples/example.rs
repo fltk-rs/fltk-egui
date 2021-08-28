@@ -1,5 +1,5 @@
 use fltk::{enums::*, prelude::*, *};
-use fltk_egui::{egui, gl};
+// use fltk_egui::{egui, gl};
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Instant;
@@ -17,6 +17,7 @@ fn main() {
     let mut win = window::GlutWindow::new(100, 100, SCREEN_WIDTH as _, SCREEN_HEIGHT as _, None);
     win.set_mode(Mode::Opengl3);
     win.end();
+    win.make_resizable(true);
     win.show();
     win.make_current();
 
@@ -38,7 +39,7 @@ fn main() {
 
     let state_rc = Rc::from(RefCell::from(egui_input_state));
     let state = state_rc.clone();
-    win.handle(move |w, ev| match ev {
+    win.handle(move |_, ev| match ev {
         enums::Event::Push
         | enums::Event::Released
         | enums::Event::KeyDown
@@ -46,7 +47,7 @@ fn main() {
         | enums::Event::MouseWheel
         | enums::Event::Resize
         | enums::Event::Move => {
-            fltk_egui::input_to_egui(w, ev, &mut state.borrow_mut());
+            fltk_egui::input_to_egui(ev, &mut state.borrow_mut());
             true
         }
         _ => false,
@@ -107,7 +108,7 @@ fn main() {
             for x in 0..PIC_WIDTH {
                 srgba.push(Color32::BLACK);
                 if y == PIC_HEIGHT - 1 {
-                    let y = amplitude * (angle * 3.142f32 / 180f32 + sine_shift).sin();
+                    let y = amplitude * (angle * std::f32::consts::PI / 180f32 + sine_shift).sin();
                     let y = PIC_HEIGHT as f32 / 2f32 - y;
                     srgba[(y as i32 * PIC_WIDTH + x) as usize] = Color32::YELLOW;
                     angle += 360f32 / PIC_WIDTH as f32;

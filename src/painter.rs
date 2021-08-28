@@ -181,6 +181,7 @@ impl Painter {
     ) -> Painter {
         unsafe {
             let mut egui_texture = 0;
+            fltk::app::set_screen_scale(0, 1.);
             gl::load_with(|name| fl_glutwin.get_proc_address(name) as *const _);
             gl::GenTextures(1, &mut egui_texture);
             gl::BindTexture(gl::TEXTURE_2D, egui_texture);
@@ -291,7 +292,7 @@ impl Painter {
     fn upload_user_textures(&mut self) {
         unsafe {
             for user_texture in &mut self.user_textures {
-                if !user_texture.texture.is_none() && !user_texture.dirty {
+                if user_texture.texture.is_some() && !user_texture.dirty {
                     continue;
                 }
                 let pixels = std::mem::take(&mut user_texture.pixels);

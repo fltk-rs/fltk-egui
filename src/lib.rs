@@ -1,9 +1,8 @@
 #![warn(clippy::all)]
-#![allow(clippy::single_match)]
 
 // Re-export dependencies.
 pub use egui;
-use fltk::{prelude::*, *};
+use fltk::*;
 pub use gl;
 
 mod painter;
@@ -47,21 +46,9 @@ pub fn is_printable_char(chr: char) -> bool {
     !is_in_private_use_area && !chr.is_ascii_control()
 }
 
-pub fn input_to_egui(
-    win: &mut window::GlutWindow,
-    event: enums::Event,
-    state: &mut EguiInputState,
-) {
+pub fn input_to_egui(event: enums::Event, state: &mut EguiInputState) {
     let (x, y) = app::event_coords();
     match event {
-        //Only the window resize event is handled
-        enums::Event::Resize => {
-            state.input.screen_rect = Some(Rect::from_min_size(
-                Pos2::new(0f32, 0f32),
-                egui::vec2(win.w() as f32, win.h() as f32) / state.input.pixels_per_point.unwrap(),
-            ))
-        }
-
         //MouseButonLeft pressed is the only one needed by egui
         enums::Event::Push => state.input.events.push(egui::Event::PointerButton {
             pos: state.pointer_pos,
@@ -143,7 +130,7 @@ pub fn input_to_egui(
         enums::Event::KeyDown => {
             //
             let event_state = app::event_state();
-            if let Some(c) = app::event_text().chars().nth(0) {
+            if let Some(c) = app::event_text().chars().next() {
                 if is_printable_char(c)
                     && event_state != enums::EventState::Ctrl
                     && event_state != enums::EventState::Meta
@@ -182,9 +169,6 @@ pub fn input_to_egui(
 }
 
 pub fn translate_virtual_key_code(key: enums::Key) -> Option<egui::Key> {
-    let space: enums::Key = enums::Key::from_char(' ');
-    let ret: enums::Key = enums::Key::from_char('\n');
-
     let matched = match key {
         enums::Key::Left => Some(egui::Key::ArrowLeft),
         enums::Key::Up => Some(egui::Key::ArrowUp),
@@ -204,10 +188,10 @@ pub fn translate_virtual_key_code(key: enums::Key) -> Option<egui::Key> {
         _ => None,
     };
 
-    let matched = if matched.is_none() {
-        if key == space {
+    if matched.is_none() {
+        if key == enums::Key::from_char(' ') {
             Some(egui::Key::Space)
-        } else if key == ret {
+        } else if key == enums::Key::from_char('\n') {
             Some(egui::Key::Enter)
         } else if key == enums::Key::from_char('a') {
             Some(egui::Key::A)
@@ -285,9 +269,8 @@ pub fn translate_virtual_key_code(key: enums::Key) -> Option<egui::Key> {
             None
         }
     } else {
-        matched
-    };
-    matched
+        None
+    }
 }
 
 pub fn translate_cursor(cursor_icon: egui::CursorIcon) -> enums::Cursor {
