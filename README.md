@@ -4,5 +4,3 @@ This is a proof of concept for an FLTK backend for Egui using a GlutWindow. The 
 
 To run the example, just run `cargo run --example example`.
 
-## Todo
-- Handle dragging the egui window.

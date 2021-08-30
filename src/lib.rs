@@ -75,7 +75,7 @@ pub fn input_to_egui(event: enums::Event, state: &mut EguiInputState) {
             modifiers: state.modifiers,
         }),
 
-        enums::Event::Move => {
+        enums::Event::Move | enums::Event::Drag => {
             state.pointer_pos = pos2(
                 x as f32 / state.input.pixels_per_point.unwrap(),
                 y as f32 / state.input.pixels_per_point.unwrap(),
@@ -96,7 +96,7 @@ pub fn input_to_egui(event: enums::Event, state: &mut EguiInputState) {
                     mac_cmd: keymod & enums::EventState::Meta == enums::EventState::Meta,
 
                     //TOD: Test on both windows and mac
-                    command: (keymod & enums::EventState::Ctrl == enums::EventState::Ctrl),
+                    command: (keymod & enums::EventState::Command == enums::EventState::Command),
                 };
 
                 if state.modifiers.command && key == Key::C {
@@ -128,7 +128,6 @@ pub fn input_to_egui(event: enums::Event, state: &mut EguiInputState) {
         }
 
         enums::Event::KeyDown => {
-            //
             let event_state = app::event_state();
             if let Some(c) = app::event_text().chars().next() {
                 if is_printable_char(c)
@@ -147,7 +146,7 @@ pub fn input_to_egui(event: enums::Event, state: &mut EguiInputState) {
                     mac_cmd: keymod & enums::EventState::Meta == enums::EventState::Meta,
 
                     //TOD: Test on both windows and mac
-                    command: (keymod & enums::EventState::Ctrl == enums::EventState::Ctrl),
+                    command: (keymod & enums::EventState::Command == enums::EventState::Command),
                 };
 
                 state.input.events.push(Event::Key {
@@ -269,7 +268,7 @@ pub fn translate_virtual_key_code(key: enums::Key) -> Option<egui::Key> {
             None
         }
     } else {
-        None
+        matched
     }
 }
 

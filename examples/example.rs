@@ -46,7 +46,8 @@ fn main() {
         | enums::Event::KeyUp
         | enums::Event::MouseWheel
         | enums::Event::Resize
-        | enums::Event::Move => {
+        | enums::Event::Move
+        | enums::Event::Drag => {
             fltk_egui::input_to_egui(ev, &mut state.borrow_mut());
             true
         }
