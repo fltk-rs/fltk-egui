@@ -1,5 +1,4 @@
 use fltk::{enums::*, prelude::*, *};
-// use fltk_egui::{egui, gl};
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Instant;
