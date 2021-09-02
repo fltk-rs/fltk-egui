@@ -10,3 +10,7 @@ $ cargo run --example basic
 
 A demo app can be found here:
 https://github.com/fltk-rs/demos/tree/master/egui-demo
+
+## Todo
+- Properly handle resizing the GlutWindow
+
