@@ -3,14 +3,11 @@
 // Re-export dependencies.
 pub use egui;
 use fltk::*;
-pub use gl;
-
-mod painter;
-
-pub use painter::Painter;
-
+use fltk::{prelude::*, window::GlutWindow};
+pub mod painter;
 use egui::*;
-
+pub use gl;
+pub use painter::Painter;
 mod clipboard;
 
 use clipboard::{
@@ -18,7 +15,38 @@ use clipboard::{
     ClipboardProvider,
 };
 
+pub fn with_fltk(
+    win: &mut fltk::window::GlutWindow,
+    scale: DpiScaling,
+) -> (Painter, EguiInputState) {
+    let scale = match scale {
+        DpiScaling::Default => win.pixels_per_unit(),
+        DpiScaling::Custom(custom) => custom,
+    };
+    let painter = painter::Painter::new(win, scale);
+    EguiInputState::new(painter)
+}
+
+pub enum DpiScaling {
+    /// Default DPI Scale by fltk, usually 1.0
+    Default,
+    /// Custome DPI scaling, e.g: 1.5, 2.0 and so fort.
+    Custom(f32),
+}
+
+pub struct FusedCursor {
+    pub cursor_icon: fltk::enums::Cursor,
+}
+
+const ARROW: enums::Cursor = enums::Cursor::Arrow;
+
+impl FusedCursor {
+    pub fn new() -> Self {
+        Self { cursor_icon: ARROW }
+    }
+}
 pub struct EguiInputState {
+    pub fuse_cursor: FusedCursor,
     pub pointer_pos: Pos2,
     pub clipboard: Option<ClipboardContext>,
     pub input: RawInput,
@@ -26,13 +54,19 @@ pub struct EguiInputState {
 }
 
 impl EguiInputState {
-    pub fn new(input: RawInput) -> Self {
-        EguiInputState {
+    pub fn new(painter: Painter) -> (Painter, EguiInputState) {
+        let _self = EguiInputState {
+            fuse_cursor: FusedCursor::new(),
             pointer_pos: Pos2::new(0f32, 0f32),
             clipboard: init_clipboard(),
-            input,
+            input: egui::RawInput {
+                screen_rect: Some(painter.screen_rect),
+                pixels_per_point: Some(painter.pixels_per_point),
+                ..Default::default()
+            },
             modifiers: Modifiers::default(),
-        }
+        };
+        (painter, _self)
     }
 }
 
@@ -46,40 +80,59 @@ pub fn is_printable_char(chr: char) -> bool {
     !is_in_private_use_area && !chr.is_ascii_control()
 }
 
-pub fn input_to_egui(event: enums::Event, state: &mut EguiInputState) {
+pub fn input_to_egui(
+    win: &mut fltk::window::GlutWindow,
+    event: enums::Event,
+    state: &mut EguiInputState,
+    painter: &mut Painter,
+) {
     let (x, y) = app::event_coords();
+    let pixels_per_point = painter.pixels_per_point;
     match event {
+        enums::Event::Resize => {
+            let (w, h) = (win.width(), win.height());
+            painter.update_screen_rect((w, h));
+            state.input.screen_rect = Some(painter.screen_rect);
+        }
         //MouseButonLeft pressed is the only one needed by egui
-        enums::Event::Push => state.input.events.push(egui::Event::PointerButton {
-            pos: state.pointer_pos,
-            button: match app::event_mouse_button() {
-                app::MouseButton::Left => egui::PointerButton::Primary,
-                app::MouseButton::Right => egui::PointerButton::Secondary,
-                app::MouseButton::Middle => egui::PointerButton::Middle,
-                _ => unreachable!(),
-            },
-            pressed: true,
-            modifiers: state.modifiers,
-        }),
+        enums::Event::Push => {
+            let mouse_btn = match app::event_mouse_button() {
+                app::MouseButton::Left => Some(egui::PointerButton::Primary),
+                app::MouseButton::Middle => Some(egui::PointerButton::Middle),
+                app::MouseButton::Right => Some(egui::PointerButton::Secondary),
+                _ => None,
+            };
+            if let Some(pressed) = mouse_btn {
+                state.input.events.push(egui::Event::PointerButton {
+                    pos: state.pointer_pos,
+                    button: pressed,
+                    pressed: true,
+                    modifiers: state.modifiers,
+                })
+            }
+        }
 
         //MouseButonLeft pressed is the only one needed by egui
-        enums::Event::Released => state.input.events.push(egui::Event::PointerButton {
-            pos: state.pointer_pos,
-            button: match app::event_mouse_button() {
-                app::MouseButton::Left => egui::PointerButton::Primary,
-                app::MouseButton::Right => egui::PointerButton::Secondary,
-                app::MouseButton::Middle => egui::PointerButton::Middle,
-                _ => unreachable!(),
-            },
-            pressed: false,
-            modifiers: state.modifiers,
-        }),
+        enums::Event::Released => {
+            // fix unreachable, we can use Option.
+            let mouse_btn = match app::event_mouse_button() {
+                app::MouseButton::Left => Some(egui::PointerButton::Primary),
+                app::MouseButton::Middle => Some(egui::PointerButton::Middle),
+                app::MouseButton::Right => Some(egui::PointerButton::Secondary),
+                _ => None,
+            };
+            if let Some(released) = mouse_btn {
+                state.input.events.push(egui::Event::PointerButton {
+                    pos: state.pointer_pos,
+                    button: released,
+                    pressed: false,
+                    modifiers: state.modifiers,
+                })
+            }
+        }
 
         enums::Event::Move | enums::Event::Drag => {
-            state.pointer_pos = pos2(
-                x as f32 / state.input.pixels_per_point.unwrap(),
-                y as f32 / state.input.pixels_per_point.unwrap(),
-            );
+            state.pointer_pos = pos2(x as f32 / pixels_per_point, y as f32 / pixels_per_point);
             state
                 .input
                 .events
@@ -272,8 +325,12 @@ pub fn translate_virtual_key_code(key: enums::Key) -> Option<egui::Key> {
     }
 }
 
-pub fn translate_cursor(cursor_icon: egui::CursorIcon) -> enums::Cursor {
-    match cursor_icon {
+pub fn translate_cursor(
+    win: &mut GlutWindow,
+    fused: &mut FusedCursor,
+    cursor_icon: egui::CursorIcon,
+) {
+    let tmp_icon = match cursor_icon {
         CursorIcon::Default => enums::Cursor::Arrow,
         CursorIcon::PointingHand => enums::Cursor::Hand,
         CursorIcon::ResizeHorizontal => enums::Cursor::WE,
@@ -285,9 +342,14 @@ pub fn translate_cursor(cursor_icon: egui::CursorIcon) -> enums::Cursor {
         CursorIcon::NotAllowed | CursorIcon::NoDrop => enums::Cursor::Wait,
         CursorIcon::Wait => enums::Cursor::Wait,
         //There doesn't seem to be a suitable SDL equivalent...
-        CursorIcon::Grab | CursorIcon::Grabbing => enums::Cursor::Hand,
+        CursorIcon::Grab | CursorIcon::Grabbing => enums::Cursor::Move,
 
         _ => enums::Cursor::Arrow,
+    };
+    
+    if tmp_icon != fused.cursor_icon {
+        fused.cursor_icon = tmp_icon;
+        win.set_cursor(tmp_icon)
     }
 }
 
@@ -301,8 +363,8 @@ pub fn init_clipboard() -> Option<ClipboardContext> {
     }
 }
 
-pub fn copy_to_clipboard(egui_state: &mut EguiInputState, copy_text: String) {
-    if let Some(clipboard) = egui_state.clipboard.as_mut() {
+pub fn copy_to_clipboard(clipboard: &mut Option<ClipboardContext>, copy_text: String) {
+    if let Some(clipboard) = clipboard.as_mut() {
         let result = clipboard.set_contents(copy_text);
         if result.is_err() {
             dbg!("Unable to set clipboard content.");

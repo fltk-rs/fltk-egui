@@ -25,8 +25,6 @@ void main() {
 static VERTEX_DATA: [GLfloat; 6] = [0.0, 0.5, 0.5, -0.5, -0.5, -0.5];
 
 pub struct Triangle {
-    pub vs: GLuint,
-    pub fs: GLuint,
     pub program: GLuint,
     pub vao: GLuint,
     pub vbo: GLuint,
@@ -76,6 +74,11 @@ pub fn link_program(vs: GLuint, fs: GLuint) -> GLuint {
         let mut status = gl::FALSE as GLint;
         gl::GetProgramiv(program, gl::LINK_STATUS, &mut status);
 
+        gl::DetachShader(program, vs);
+        gl::DetachShader(program, fs);
+        gl::DeleteShader(vs);
+        gl::DeleteShader(fs);
+
         // Fail on error
         if status != (gl::TRUE as GLint) {
             let mut len: GLint = 0;
@@ -109,14 +112,7 @@ impl Triangle {
             gl::GenVertexArrays(1, &mut vao);
             gl::GenBuffers(1, &mut vbo);
         }
-        Triangle {
-            // Create GLSL shaders
-            vs,
-            fs,
-            program,
-            vao,
-            vbo,
-        }
+        Triangle { program, vao, vbo }
     }
     pub fn draw(&self) {
         unsafe {
@@ -160,8 +156,6 @@ impl Drop for Triangle {
     fn drop(&mut self) {
         unsafe {
             gl::DeleteProgram(self.program);
-            gl::DeleteShader(self.fs);
-            gl::DeleteShader(self.vs);
             gl::DeleteBuffers(1, &self.vbo);
             gl::DeleteVertexArrays(1, &self.vao);
         }
