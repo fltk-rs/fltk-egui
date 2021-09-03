@@ -1,13 +1,13 @@
+use egui::{vec2, Color32, Image};
+use egui_backend::DpiScaling;
 use fltk::{enums::*, prelude::*, *};
 use fltk_egui as egui_backend;
-use egui_backend::DpiScaling;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Instant;
-use egui::{vec2, Color32, Image};
 mod triangle;
 
-// Realtime rendering High power (CPU) usage 
+// Realtime rendering High power (CPU) usage
 
 const SCREEN_WIDTH: u32 = 800;
 const SCREEN_HEIGHT: u32 = 600;
@@ -39,7 +39,12 @@ fn main() {
         | enums::Event::Resize
         | enums::Event::Move
         | enums::Event::Drag => {
-            egui_backend::input_to_egui(win, ev,&mut state.borrow_mut(), &mut painter.borrow_mut());
+            egui_backend::input_to_egui(
+                win,
+                ev,
+                &mut state.borrow_mut(),
+                &mut painter.borrow_mut(),
+            );
             true
         }
         _ => false,
@@ -59,8 +64,11 @@ fn main() {
 
     //The user texture is what allows us to mix Egui and GL rendering contexts.
     //Egui just needs the texture id, as the actual texture is managed by the backend.
-    let chip8_tex_id =
-        painter_rc.borrow_mut().new_user_texture((PIC_WIDTH as usize, PIC_HEIGHT as usize), &srgba, false);
+    let chip8_tex_id = painter_rc.borrow_mut().new_user_texture(
+        (PIC_WIDTH as usize, PIC_HEIGHT as usize),
+        &srgba,
+        false,
+    );
 
     //We will draw a crisp white triangle using OpenGL.
     let triangle = triangle::Triangle::new();
@@ -119,7 +127,7 @@ fn main() {
             ui.label(" ");
             ui.text_edit_multiline(&mut test_str);
             ui.label(" ");
-            
+
             ui.add(egui::Slider::new(&mut amplitude, 0.0..=50.0).text("Amplitude"));
             ui.label(" ");
             if ui.button("Quit").on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
@@ -141,11 +149,7 @@ fn main() {
         //Use this only if egui is being used for all drawing and you aren't mixing your own Open GL
         //drawing calls with it.
         //Since we are custom drawing an OpenGL Triangle we don't need egui to clear the background.
-        painter.paint_jobs(
-            None,
-            paint_jobs,
-            &egui_ctx.texture(),
-        );
+        painter.paint_jobs(None, paint_jobs, &egui_ctx.texture());
 
         win.swap_buffers();
         win.flush();

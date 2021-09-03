@@ -70,6 +70,7 @@ impl EguiInputState {
     }
 }
 
+// copied from https://github.com/not-fl3/egui-miniquad/blob/842e127d05e4c921da5ae1e797e28e848a220bea/src/input.rs#L25
 pub fn is_printable_char(chr: char) -> bool {
     #![allow(clippy::manual_range_contains)]
 
@@ -346,7 +347,7 @@ pub fn translate_cursor(
 
         _ => enums::Cursor::Arrow,
     };
-    
+
     if tmp_icon != fused.cursor_icon {
         fused.cursor_icon = tmp_icon;
         win.set_cursor(tmp_icon)

@@ -1,10 +1,10 @@
+use egui_backend::DpiScaling;
 use fltk::{enums::*, prelude::*, *};
 use fltk_egui as egui_backend;
-use egui_backend::DpiScaling;
-use std::{cell::RefCell, time::Instant};
 use std::rc::Rc;
+use std::{cell::RefCell, time::Instant};
 
-// Working fine with Low power (CPU) usage 
+// Working fine with Low power (CPU) usage
 
 const SCREEN_WIDTH: u32 = 800;
 const SCREEN_HEIGHT: u32 = 600;
@@ -34,7 +34,12 @@ fn main() {
         | enums::Event::Resize
         | enums::Event::Move
         | enums::Event::Drag => {
-            egui_backend::input_to_egui(win, ev, &mut state.borrow_mut(), &mut painter.borrow_mut());
+            egui_backend::input_to_egui(
+                win,
+                ev,
+                &mut state.borrow_mut(),
+                &mut painter.borrow_mut(),
+            );
             true
         }
         _ => false,
@@ -68,7 +73,11 @@ fn main() {
             }
             ui.label(format!("Hello '{}', age {}", name, age));
             ui.separator();
-            if ui.button("Quit?").on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
+            if ui
+                .button("Quit?")
+                .on_hover_cursor(egui::CursorIcon::PointingHand)
+                .clicked()
+            {
                 quit = true;
             }
         });
@@ -84,11 +93,7 @@ fn main() {
         let paint_jobs = egui_ctx.tessellate(paint_cmds);
 
         //Draw egui texture
-        painter.paint_jobs(
-            None,
-            paint_jobs,
-            &egui_ctx.texture(),
-        );
+        painter.paint_jobs(None, paint_jobs, &egui_ctx.texture());
 
         win.swap_buffers();
         win.flush();

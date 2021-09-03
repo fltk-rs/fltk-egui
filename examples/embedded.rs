@@ -1,10 +1,10 @@
+use egui_backend::DpiScaling;
 use fltk::{enums::*, prelude::*, *};
 use fltk_egui as egui_backend;
-use egui_backend::DpiScaling;
-use std::{cell::RefCell, time::Instant};
 use std::rc::Rc;
+use std::{cell::RefCell, time::Instant};
 
-// Working fine with Low power (CPU) usage 
+// Working fine with Low power (CPU) usage
 
 const SCREEN_WIDTH: u32 = 800;
 const SCREEN_HEIGHT: u32 = 600;
@@ -15,7 +15,9 @@ fn main() {
     let mut win = window::GlutWindow::new(5, 5, main_win.w() - 200, main_win.h() - 10, None);
     win.set_mode(Mode::Opengl3);
     win.end();
-    let mut frm = frame::Frame::default().with_size(185, 590).right_of(&win, 5);
+    let mut frm = frame::Frame::default()
+        .with_size(185, 590)
+        .right_of(&win, 5);
     frm.set_color(Color::Red);
     frm.set_frame(FrameType::FlatBox);
     main_win.end();
@@ -33,19 +35,25 @@ fn main() {
     main_win.handle({
         let mut glut_win = win.clone();
         move |_, ev| match ev {
-        enums::Event::Push
-        | enums::Event::Released
-        | enums::Event::KeyDown
-        | enums::Event::KeyUp
-        | enums::Event::MouseWheel
-        | enums::Event::Resize
-        | enums::Event::Move
-        | enums::Event::Drag => {
-            egui_backend::input_to_egui(&mut glut_win, ev, &mut state.borrow_mut(), &mut painter.borrow_mut());
-            true
+            enums::Event::Push
+            | enums::Event::Released
+            | enums::Event::KeyDown
+            | enums::Event::KeyUp
+            | enums::Event::MouseWheel
+            | enums::Event::Resize
+            | enums::Event::Move
+            | enums::Event::Drag => {
+                egui_backend::input_to_egui(
+                    &mut glut_win,
+                    ev,
+                    &mut state.borrow_mut(),
+                    &mut painter.borrow_mut(),
+                );
+                true
+            }
+            _ => false,
         }
-        _ => false,
-    }});
+    });
 
     let start_time = Instant::now();
     let mut name = String::new();
@@ -75,7 +83,11 @@ fn main() {
             }
             ui.label(format!("Hello '{}', age {}", name, age));
             ui.separator();
-            if ui.button("Quit?").on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
+            if ui
+                .button("Quit?")
+                .on_hover_cursor(egui::CursorIcon::PointingHand)
+                .clicked()
+            {
                 quit = true;
             }
         });
@@ -91,11 +103,7 @@ fn main() {
         let paint_jobs = egui_ctx.tessellate(paint_cmds);
 
         //Draw egui texture
-        painter.paint_jobs(
-            None,
-            paint_jobs,
-            &egui_ctx.texture(),
-        );
+        painter.paint_jobs(None, paint_jobs, &egui_ctx.texture());
 
         win.swap_buffers();
         win.flush();

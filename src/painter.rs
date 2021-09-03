@@ -2,7 +2,11 @@ extern crate gl;
 use core::mem;
 use core::ptr;
 use core::str;
-use fltk::{app, prelude::{WidgetExt, WindowExt}, window};
+use fltk::{
+    app,
+    prelude::{WidgetExt, WindowExt},
+    window,
+};
 use gl::types::{GLchar, GLenum, GLint, GLsizeiptr, GLsync, GLuint};
 use std::ffi::CString;
 use std::os::raw::c_void;
