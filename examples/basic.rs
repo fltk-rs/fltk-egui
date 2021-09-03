@@ -43,6 +43,7 @@ fn main() {
     let start_time = Instant::now();
     let mut name = String::new();
     let mut age = 0;
+    let mut quit = false;
 
     while a.wait() {
         let mut state = state_rc.borrow_mut();
@@ -66,6 +67,10 @@ fn main() {
                 age += 1;
             }
             ui.label(format!("Hello '{}', age {}", name, age));
+            ui.separator();
+            if ui.button("Quit?").on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
+                quit = true;
+            }
         });
 
         let (egui_output, paint_cmds) = egui_ctx.end_frame();
@@ -88,6 +93,9 @@ fn main() {
         win.swap_buffers();
         win.flush();
         app::sleep(0.006);
-        app::awake()
+        app::awake();
+        if quit {
+            break;
+        }
     }
 }

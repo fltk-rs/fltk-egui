@@ -62,15 +62,15 @@ fn main() {
     let chip8_tex_id =
         painter_rc.borrow_mut().new_user_texture((PIC_WIDTH as usize, PIC_HEIGHT as usize), &srgba, false);
 
+    //We will draw a crisp white triangle using OpenGL.
+    let triangle = triangle::Triangle::new();
+
     //Some variables to help draw a sine wave
     let mut sine_shift = 0f32;
-
     let mut amplitude: f32 = 50f32;
     let mut test_str: String =
         "A text box to write in. Cut, copy, paste commands are available.".to_owned();
-
-    //We will draw a crisp white triangle using OpenGL.
-    let triangle = triangle::Triangle::new();
+    let mut quit = false;
 
     while a.wait() {
         let mut state = state_rc.borrow_mut();
@@ -122,8 +122,8 @@ fn main() {
             
             ui.add(egui::Slider::new(&mut amplitude, 0.0..=50.0).text("Amplitude"));
             ui.label(" ");
-            if ui.button("Quit").clicked() {
-                app::quit();
+            if ui.button("Quit").on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
+                quit = true;
             }
         });
 
@@ -151,5 +151,8 @@ fn main() {
         win.flush();
         app::sleep(0.006);
         app::awake();
+        if quit {
+            break;
+        }
     }
 }
