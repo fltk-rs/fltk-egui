@@ -20,6 +20,7 @@ fn main() {
         .right_of(&win, 5);
     frm.set_color(Color::Red);
     frm.set_frame(FrameType::FlatBox);
+    frm.set_label_size(20);
     main_win.end();
     main_win.make_resizable(true);
     main_win.show();
@@ -65,6 +66,7 @@ fn main() {
         let mut painter = painter_rc.borrow_mut();
         state.input.time = Some(start_time.elapsed().as_secs_f64());
         egui_ctx.begin_frame(state.input.take());
+        frm.set_label(&format!("Hello {}", &name));
 
         unsafe {
             // Clear the screen to black
