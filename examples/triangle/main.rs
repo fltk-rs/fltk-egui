@@ -1,7 +1,7 @@
-use egui::{vec2, Color32, Image};
-use egui_backend::DpiScaling;
 use fltk::{enums::*, prelude::*, *};
 use fltk_egui as egui_backend;
+use egui_backend::{DpiScaling, egui, gl};
+use egui::{vec2, Color32, Image};
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Instant;
