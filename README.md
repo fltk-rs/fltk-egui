@@ -4,8 +4,10 @@ This is a proof of concept for an FLTK backend for Egui using a GlutWindow. The 
 
 To run the examples, just run:
 ```
+$ cargo run --example demo_lib
 $ cargo run --example triangle
 $ cargo run --example basic
+$ cargo run --example embedded
 ```
 
 A demo app can be found here:
