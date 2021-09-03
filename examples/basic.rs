@@ -78,10 +78,7 @@ fn main() {
 
         let paint_jobs = egui_ctx.tessellate(paint_cmds);
 
-        //Note: passing a bg_color to paint_jobs will clear any previously drawn stuff.
-        //Use this only if egui is being used for all drawing and you aren't mixing your own Open GL
-        //drawing calls with it.
-        //Since we are custom drawing an OpenGL Triangle we don't need egui to clear the background.
+        //Draw egui texture
         painter.paint_jobs(
             None,
             paint_jobs,

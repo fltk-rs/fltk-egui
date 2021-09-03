@@ -23,7 +23,7 @@ fn main() {
     win.show();
     win.make_current();
 
-    let (painter,egui_input_state) = fltk_egui::with_fltk(&mut win, DpiScaling::Default);
+    let (painter, egui_input_state) = egui_backend::with_fltk(&mut win, DpiScaling::Default);
     let mut egui_ctx = egui::CtxRef::default();
 
     let state_rc = Rc::from(RefCell::from(egui_input_state));
