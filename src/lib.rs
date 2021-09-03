@@ -237,7 +237,7 @@ pub fn input_to_egui(
         }
 
         _ => {
-            dbg!(event);
+            //dbg!(event);
         }
     }
 }
