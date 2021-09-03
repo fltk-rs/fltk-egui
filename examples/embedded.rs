@@ -13,20 +13,20 @@ fn main() {
     let a = app::App::default();
     app::set_font_size(20);
     let mut main_win = window::Window::new(100, 100, SCREEN_WIDTH as _, SCREEN_HEIGHT as _, None);
-    let mut win = window::GlutWindow::new(5, 5, main_win.w() - 200, main_win.h() - 10, None);
-    win.set_mode(Mode::Opengl3);
-    win.end();
+    let mut glut_win = window::GlutWindow::new(5, 5, main_win.w() - 200, main_win.h() - 10, None);
+    glut_win.set_mode(Mode::Opengl3);
+    glut_win.end();
     let mut frm = frame::Frame::default()
         .with_size(185, 590)
-        .right_of(&win, 5);
+        .right_of(&glut_win, 5);
     frm.set_color(Color::Red);
     frm.set_frame(FrameType::FlatBox);
     main_win.end();
     main_win.make_resizable(true);
     main_win.show();
-    win.make_current();
+    glut_win.make_current();
 
-    let (painter, egui_input_state) = egui_backend::with_fltk(&mut win, DpiScaling::Custom(1.5));
+    let (painter, egui_input_state) = egui_backend::with_fltk(&mut glut_win, DpiScaling::Custom(1.5));
     let mut egui_ctx = egui::CtxRef::default();
 
     let state_rc = Rc::from(RefCell::from(egui_input_state));
@@ -34,7 +34,7 @@ fn main() {
     let state = state_rc.clone();
     let painter = painter_rc.clone();
     main_win.handle({
-        let mut glut_win = win.clone();
+        let mut w = glut_win.clone();
         move |_, ev| match ev {
             enums::Event::Push
             | enums::Event::Released
@@ -45,7 +45,7 @@ fn main() {
             | enums::Event::Move
             | enums::Event::Drag => {
                 egui_backend::input_to_egui(
-                    &mut glut_win,
+                    &mut w,
                     ev,
                     &mut state.borrow_mut(),
                     &mut painter.borrow_mut(),
@@ -95,7 +95,7 @@ fn main() {
         });
 
         let (egui_output, paint_cmds) = egui_ctx.end_frame();
-        egui_backend::translate_cursor(&mut win, &mut state.fuse_cursor, egui_output.cursor_icon);
+        egui_backend::translate_cursor(&mut glut_win, &mut state.fuse_cursor, egui_output.cursor_icon);
 
         //Handle cut, copy text from egui
         if !egui_output.copied_text.is_empty() {
@@ -107,8 +107,8 @@ fn main() {
         //Draw egui texture
         painter.paint_jobs(None, paint_jobs, &egui_ctx.texture());
 
-        win.swap_buffers();
-        win.flush();
+        glut_win.swap_buffers();
+        glut_win.flush();
         app::sleep(0.006);
         app::awake();
         if quit {
