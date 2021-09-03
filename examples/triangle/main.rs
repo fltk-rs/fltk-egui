@@ -1,43 +1,36 @@
 use fltk::{enums::*, prelude::*, *};
+use fltk_egui as egui_backend;
+use egui_backend::DpiScaling;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Instant;
+use egui::{vec2, Color32, Image};
+mod triangle;
 
-use egui::{vec2, Color32, Image, Pos2, Rect};
+// Realtime rendering High power (CPU) usage 
 
 const SCREEN_WIDTH: u32 = 800;
 const SCREEN_HEIGHT: u32 = 600;
 const PIC_WIDTH: i32 = 320;
 const PIC_HEIGHT: i32 = 192;
-mod triangle;
 
 fn main() {
     let a = app::App::default();
     let mut win = window::GlutWindow::new(100, 100, SCREEN_WIDTH as _, SCREEN_HEIGHT as _, None);
     win.set_mode(Mode::Opengl3);
     win.end();
+    win.make_resizable(true);
     win.show();
     win.make_current();
 
-    let mut painter = fltk_egui::Painter::new(&win, SCREEN_WIDTH, SCREEN_HEIGHT);
+    let (painter, egui_input_state) = egui_backend::with_fltk(&mut win, DpiScaling::Default);
     let mut egui_ctx = egui::CtxRef::default();
 
-    let native_pixels_per_point = win.pixels_per_unit();
-
-    let (width, height) = (win.w(), win.h());
-
-    let egui_input_state = fltk_egui::EguiInputState::new(egui::RawInput {
-        screen_rect: Some(Rect::from_min_size(
-            Pos2::new(0f32, 0f32),
-            vec2(width as f32, height as f32) / native_pixels_per_point,
-        )),
-        pixels_per_point: Some(native_pixels_per_point),
-        ..Default::default()
-    });
-
     let state_rc = Rc::from(RefCell::from(egui_input_state));
+    let painter_rc = Rc::from(RefCell::from(painter));
     let state = state_rc.clone();
-    win.handle(move |_, ev| match ev {
+    let painter = painter_rc.clone();
+    win.handle(move |win, ev| match ev {
         enums::Event::Push
         | enums::Event::Released
         | enums::Event::KeyDown
@@ -46,7 +39,7 @@ fn main() {
         | enums::Event::Resize
         | enums::Event::Move
         | enums::Event::Drag => {
-            fltk_egui::input_to_egui(ev, &mut state.borrow_mut());
+            egui_backend::input_to_egui(win, ev,&mut state.borrow_mut(), &mut painter.borrow_mut());
             true
         }
         _ => false,
@@ -67,27 +60,23 @@ fn main() {
     //The user texture is what allows us to mix Egui and GL rendering contexts.
     //Egui just needs the texture id, as the actual texture is managed by the backend.
     let chip8_tex_id =
-        painter.new_user_texture((PIC_WIDTH as usize, PIC_HEIGHT as usize), &srgba, false);
-
-    //Some variables to help draw a sine wave
-    let mut sine_shift = 0f32;
-
-    let mut amplitude: f32 = 50f32;
-    let mut test_str: String =
-        "A text box to write in. Cut, copy, paste commands are available.".to_owned();
+        painter_rc.borrow_mut().new_user_texture((PIC_WIDTH as usize, PIC_HEIGHT as usize), &srgba, false);
 
     //We will draw a crisp white triangle using OpenGL.
     let triangle = triangle::Triangle::new();
 
-    while a.wait() {
-        let state = state_rc.clone();
-        state.borrow_mut().input.time = Some(start_time.elapsed().as_secs_f64());
-        egui_ctx.begin_frame(state.borrow_mut().input.take());
+    //Some variables to help draw a sine wave
+    let mut sine_shift = 0f32;
+    let mut amplitude: f32 = 50f32;
+    let mut test_str: String =
+        "A text box to write in. Cut, copy, paste commands are available.".to_owned();
+    let mut quit = false;
 
-        //In egui 0.10.0 we seem to be losing the value to pixels_per_point,
-        //so setting it every frame now.
-        //TODO: Investigate if this is the right way.
-        state.borrow_mut().input.pixels_per_point = Some(native_pixels_per_point);
+    while a.wait() {
+        let mut state = state_rc.borrow_mut();
+        let mut painter = painter_rc.borrow_mut();
+        state.input.time = Some(start_time.elapsed().as_secs_f64());
+        egui_ctx.begin_frame(state.input.take());
 
         //An example of how OpenGL can be used to draw custom stuff with egui
         //overlaying it:
@@ -97,6 +86,7 @@ fn main() {
             gl::ClearColor(0.3, 0.6, 0.3, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT);
         }
+
         //Then draw our triangle.
         triangle.draw();
 
@@ -132,16 +122,17 @@ fn main() {
             
             ui.add(egui::Slider::new(&mut amplitude, 0.0..=50.0).text("Amplitude"));
             ui.label(" ");
-            if ui.button("Quit").clicked() {
-                app::quit();
+            if ui.button("Quit").on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
+                quit = true;
             }
         });
 
         let (egui_output, paint_cmds) = egui_ctx.end_frame();
+        egui_backend::translate_cursor(&mut win, &mut state.fuse_cursor, egui_output.cursor_icon);
 
         //Handle cut, copy text from egui
         if !egui_output.copied_text.is_empty() {
-            fltk_egui::copy_to_clipboard(&mut state.borrow_mut(), egui_output.copied_text);
+            fltk_egui::copy_to_clipboard(&mut state.clipboard, egui_output.copied_text);
         }
 
         let paint_jobs = egui_ctx.tessellate(paint_cmds);
@@ -154,13 +145,14 @@ fn main() {
             None,
             paint_jobs,
             &egui_ctx.texture(),
-            native_pixels_per_point,
         );
 
         win.swap_buffers();
         win.flush();
-
-        app::sleep(0.016);
+        app::sleep(0.006);
         app::awake();
+        if quit {
+            break;
+        }
     }
 }
