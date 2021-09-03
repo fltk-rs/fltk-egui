@@ -215,10 +215,10 @@ pub fn input_to_egui(
                 let zoom_factor = 1.2;
                 match app::event_dy() {
                     app::MouseWheel::Up => {
-                        state.input.zoom_delta *= zoom_factor;
+                        state.input.zoom_delta /= zoom_factor;
                     }
                     app::MouseWheel::Down => {
-                        state.input.zoom_delta /= zoom_factor;
+                        state.input.zoom_delta *= zoom_factor;
                     }
                     _ => (),
                 }
