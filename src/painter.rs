@@ -2,7 +2,7 @@ extern crate gl;
 use core::mem;
 use core::ptr;
 use core::str;
-use fltk::{prelude::WidgetExt, window};
+use fltk::{app, prelude::{WidgetExt, WindowExt}, window};
 use gl::types::{GLchar, GLenum, GLint, GLsizeiptr, GLsync, GLuint};
 use std::ffi::CString;
 use std::os::raw::c_void;
@@ -188,6 +188,7 @@ impl Painter {
     pub fn new(window: &mut window::GlutWindow, scale: f32) -> Painter {
         unsafe {
             let mut egui_texture = 0;
+            app::set_screen_scale(window.screen_num(), 1.);
             gl::load_with(|name| window.get_proc_address(name) as *const _);
             gl::GenTextures(1, &mut egui_texture);
             gl::BindTexture(gl::TEXTURE_2D, egui_texture);
