@@ -91,8 +91,7 @@ pub fn input_to_egui(
     let pixels_per_point = painter.pixels_per_point;
     match event {
         enums::Event::Resize => {
-            let (w, h) = (win.width(), win.height());
-            painter.update_screen_rect((w, h));
+            painter.update_screen_rect((win.width(), win.height()));
             state.input.screen_rect = Some(painter.screen_rect);
         }
         //MouseButonLeft pressed is the only one needed by egui
@@ -212,11 +211,33 @@ pub fn input_to_egui(
         }
 
         enums::Event::MouseWheel => {
-            state.input.scroll_delta = vec2(app::event_x() as f32, app::event_y() as f32);
+            if app::is_event_ctrl() {
+                let zoom_factor = 1.2;
+                match app::event_dy() {
+                    app::MouseWheel::Up => {
+                        state.input.zoom_delta *= zoom_factor;
+                    }
+                    app::MouseWheel::Down => {
+                        state.input.zoom_delta /= zoom_factor;
+                    }
+                    _ => (),
+                }
+            } else {
+                let scroll_factor = 15.0;
+                match app::event_dy() {
+                    app::MouseWheel::Up => {
+                        state.input.scroll_delta.y -= scroll_factor;
+                    }
+                    app::MouseWheel::Down => {
+                        state.input.scroll_delta.y += scroll_factor;
+                    }
+                    _ => (),
+                }
+            }
         }
 
         _ => {
-            //dbg!(event);
+            dbg!(event);
         }
     }
 }
