@@ -12,5 +12,5 @@ A demo app can be found here:
 https://github.com/fltk-rs/demos/tree/master/egui-demo
 
 ## Todo
-- Properly handle resizing the GlutWindow
-
+- Properly handle resizing the GlutWindow: ✅
+- Support egui_demo_lib crate directly: ✳
