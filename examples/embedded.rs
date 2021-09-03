@@ -11,6 +11,7 @@ const SCREEN_HEIGHT: u32 = 600;
 
 fn main() {
     let a = app::App::default();
+    app::set_font_size(20);
     let mut main_win = window::Window::new(100, 100, SCREEN_WIDTH as _, SCREEN_HEIGHT as _, None);
     let mut win = window::GlutWindow::new(5, 5, main_win.w() - 200, main_win.h() - 10, None);
     win.set_mode(Mode::Opengl3);
@@ -20,7 +21,6 @@ fn main() {
         .right_of(&win, 5);
     frm.set_color(Color::Red);
     frm.set_frame(FrameType::FlatBox);
-    frm.set_label_size(20);
     main_win.end();
     main_win.make_resizable(true);
     main_win.show();
