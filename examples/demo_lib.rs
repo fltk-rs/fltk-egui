@@ -59,6 +59,7 @@ fn main() {
             gl::ClearColor(0.6, 0.3, 0.3, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT);
         }
+        
         demo_windows.ui(&egui_ctx);
 
         let (egui_output, paint_cmds) = egui_ctx.end_frame();
