@@ -1,6 +1,10 @@
-use fltk_egui as egui_backend;
-use egui_backend::{fltk::{enums::*, prelude::*, *}, DpiScaling, egui, gl};
 use egui::{vec2, Color32, Image};
+use egui_backend::{
+    egui,
+    fltk::{enums::*, prelude::*, *},
+    gl, DpiScaling,
+};
+use fltk_egui as egui_backend;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Instant;
@@ -39,12 +43,8 @@ fn main() {
         | enums::Event::Move
         | enums::Event::Drag => {
             let mut state = state.borrow_mut();
-            state.fuse_input(
-                win,
-                ev,
-                &mut painter.borrow_mut(),
-            );
-			true
+            state.fuse_input(win, ev, &mut painter.borrow_mut());
+            true
         }
         _ => false,
     });
@@ -147,10 +147,10 @@ fn main() {
 
         win.swap_buffers();
         win.flush();
-		app::sleep(0.006);
-		app::awake();
-		if quit {
-			break;
-		}
+        app::sleep(0.006);
+        app::awake();
+        if quit {
+            break;
+        }
     }
 }

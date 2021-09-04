@@ -1,5 +1,9 @@
+use egui_backend::{
+    egui,
+    fltk::{enums::*, prelude::*, *},
+    gl, DpiScaling,
+};
 use fltk_egui as egui_backend;
-use egui_backend::{fltk::{enums::*, prelude::*, *}, DpiScaling, egui, gl};
 use std::rc::Rc;
 use std::{cell::RefCell, time::Instant};
 
@@ -33,12 +37,8 @@ fn main() {
         | enums::Event::Resize
         | enums::Event::Move
         | enums::Event::Drag => {
-		    let mut state = state.borrow_mut();
-            state.fuse_input(
-                win,
-                ev,
-                &mut painter.borrow_mut(),
-            );
+            let mut state = state.borrow_mut();
+            state.fuse_input(win, ev, &mut painter.borrow_mut());
             true
         }
         _ => false,
@@ -82,19 +82,19 @@ fn main() {
         });
 
         let (egui_output, paint_cmds) = egui_ctx.end_frame();
-		state.fuse_output(&mut win, &egui_output);
-		
+        state.fuse_output(&mut win, &egui_output);
+
         let paint_jobs = egui_ctx.tessellate(paint_cmds);
 
         //Draw egui texture
         painter.paint_jobs(None, paint_jobs, &egui_ctx.texture());
-		
-		win.swap_buffers();
+
+        win.swap_buffers();
         win.flush();
-		
-		if egui_output.needs_repaint {
-			// let egui doing some animations.
-			app::awake()
+
+        if egui_output.needs_repaint {
+            // let egui doing some animations.
+            app::awake()
         } else if quit {
             break;
         }

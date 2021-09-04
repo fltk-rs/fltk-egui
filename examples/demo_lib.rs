@@ -1,5 +1,9 @@
+use egui_backend::{
+    egui,
+    fltk::{enums::*, prelude::*, *},
+    gl, DpiScaling,
+};
 use fltk_egui as egui_backend;
-use egui_backend::{fltk::{enums::*, prelude::*, *}, DpiScaling, egui, gl};
 use std::rc::Rc;
 use std::{cell::RefCell, time::Instant};
 
@@ -33,12 +37,8 @@ fn main() {
         | enums::Event::Resize
         | enums::Event::Move
         | enums::Event::Drag => {
-			let mut state = state.borrow_mut();
-            state.fuse_input(
-                win,
-                ev,
-                &mut painter.borrow_mut(),
-            );
+            let mut state = state.borrow_mut();
+            state.fuse_input(win, ev, &mut painter.borrow_mut());
             true
         }
         _ => false,
@@ -58,7 +58,7 @@ fn main() {
             gl::ClearColor(0.6, 0.3, 0.3, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT);
         }
-        
+
         demo_windows.ui(&egui_ctx);
 
         let (egui_output, paint_cmds) = egui_ctx.end_frame();
@@ -71,10 +71,10 @@ fn main() {
 
         win.swap_buffers();
         win.flush();
-       	
-		if egui_output.needs_repaint {
-			// let egui doing some animations.
-			app::awake()
+
+        if egui_output.needs_repaint {
+            // let egui doing some animations.
+            app::awake()
         }
     }
 }

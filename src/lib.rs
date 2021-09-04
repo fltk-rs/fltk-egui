@@ -2,28 +2,21 @@
 
 // Re-export dependencies.
 pub use egui;
+use egui::{pos2, CursorIcon, Event, Key, Modifiers, Pos2, RawInput};
 pub use fltk;
-use fltk::{prelude::*, window::GlutWindow, enums, app};
-use egui::{pos2, Pos2, Key, Modifiers, Event, RawInput, CursorIcon};
+use fltk::{app, enums, prelude::*, window::GlutWindow};
 pub use gl;
 mod painter;
 use painter::Painter;
 
 #[cfg(feature = "clipboard")]
-use copypasta::{
-    ClipboardContext,
-    ClipboardProvider,
-};
+use copypasta::{ClipboardContext, ClipboardProvider};
 
 #[cfg(not(feature = "clipboard"))]
 mod clipboard;
 
 #[cfg(not(feature = "clipboard"))]
-use clipboard::{
-    ClipboardContext,
-    ClipboardProvider,
-};
-
+use clipboard::{ClipboardContext, ClipboardProvider};
 
 pub fn with_fltk(
     win: &mut fltk::window::GlutWindow,
@@ -78,8 +71,8 @@ impl EguiInputState {
         };
         (painter, _self)
     }
-	
-	pub fn fuse_input(
+
+    pub fn fuse_input(
         &mut self,
         win: &mut fltk::window::GlutWindow,
         event: enums::Event,

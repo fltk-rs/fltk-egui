@@ -422,7 +422,7 @@ impl Painter {
     ) {
         self.upload_egui_texture(egui_texture);
         self.upload_user_textures();
-		
+
         unsafe {
             if let Some(color) = bg_color {
                 gl::ClearColor(
@@ -434,7 +434,7 @@ impl Painter {
 
                 gl::Clear(gl::COLOR_BUFFER_BIT);
             }
-			
+
             //Let OpenGL know we are dealing with SRGB colors so that it
             //can do the blending correctly. Not setting the framebuffer
             //leads to darkened, oversaturated colors.
@@ -445,16 +445,12 @@ impl Painter {
             gl::UseProgram(self.program);
             gl::ActiveTexture(gl::TEXTURE0);
             let (canvas_width, canvas_height) = self.canvas_size;
-			let pixels_per_point = self.pixels_per_point;
+            let pixels_per_point = self.pixels_per_point;
             let u_screen_size = CString::new("u_screen_size").unwrap();
             let u_screen_size_ptr = u_screen_size.as_ptr();
             let u_screen_size_loc = gl::GetUniformLocation(self.program, u_screen_size_ptr);
             let (x, y) = (self.screen_rect.width(), self.screen_rect.height());
-            gl::Uniform2f(
-                u_screen_size_loc,
-                x,
-				y,
-            );
+            gl::Uniform2f(u_screen_size_loc, x, y);
             let u_sampler = CString::new("u_sampler").unwrap();
             let u_sampler_ptr = u_sampler.as_ptr();
             let u_sampler_loc = gl::GetUniformLocation(self.program, u_sampler_ptr);
@@ -462,7 +458,7 @@ impl Painter {
             gl::Viewport(0, 0, canvas_width, canvas_height);
             let screen_x = canvas_width as f32;
             let screen_y = canvas_height as f32;
-			
+
             for ClippedMesh(clip_rect, mesh) in meshes {
                 gl::BindTexture(gl::TEXTURE_2D, self.get_texture(mesh.texture_id));
                 let clip_min_x = pixels_per_point * clip_rect.min.x;

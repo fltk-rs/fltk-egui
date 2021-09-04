@@ -1,5 +1,9 @@
+use egui_backend::{
+    egui,
+    fltk::{enums::*, prelude::*, *},
+    gl, DpiScaling,
+};
 use fltk_egui as egui_backend;
-use egui_backend::{fltk::{enums::*, prelude::*, *}, DpiScaling, egui, gl};
 use std::rc::Rc;
 use std::{cell::RefCell, time::Instant};
 
@@ -25,7 +29,8 @@ fn main() {
     main_win.show();
     glut_win.make_current();
 
-    let (painter, egui_input_state) = egui_backend::with_fltk(&mut glut_win, DpiScaling::Custom(1.5));
+    let (painter, egui_input_state) =
+        egui_backend::with_fltk(&mut glut_win, DpiScaling::Custom(1.5));
     let mut egui_ctx = egui::CtxRef::default();
 
     let state_rc = Rc::from(RefCell::from(egui_input_state));
@@ -44,12 +49,8 @@ fn main() {
             | enums::Event::Move
             | enums::Event::Drag => {
                 let mut state = state.borrow_mut();
-                state.fuse_input(
-                    &mut w,
-                    ev,
-                    &mut painter.borrow_mut(),
-                );
-				true
+                state.fuse_input(&mut w, ev, &mut painter.borrow_mut());
+                true
             }
             _ => false,
         }
@@ -72,7 +73,7 @@ fn main() {
             gl::ClearColor(0.6, 0.3, 0.3, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT);
         }
-		
+
         egui::CentralPanel::default().show(&egui_ctx, |ui| {
             ui.heading("My egui Application");
             ui.horizontal(|ui| {
