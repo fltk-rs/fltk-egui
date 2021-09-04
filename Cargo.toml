@@ -10,13 +10,19 @@ keywords = ["gui", "widgets", "graphics"]
 categories = ["gui"]
 readme = "README.md"
 license = "MIT"
-
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-fltk = { version = "1.1", features = ["enable-glwindow"] }
+fltk = { version = "1", features = ["enable-glwindow"] }
 gl = "0.14"
 egui = "0.14"
+
+[dependencies.copypasta]
+version = "0.7"
+optional = true
+
+[features]
+clipboard = ["copypasta"]
 
 [dev-dependencies]
 egui_demo_lib = "0.14"

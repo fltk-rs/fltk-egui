@@ -1,8 +1,8 @@
 // Draws a simple white triangle
 // based on the example from:
 // https://github.com/brendanzab/gl-rs/blob/master/gl/examples/triangle.rs
-use fltk_egui as egui_backend;
 use egui_backend::gl;
+use fltk_egui as egui_backend;
 use gl::types::*;
 use std::ffi::CString;
 use std::mem;
