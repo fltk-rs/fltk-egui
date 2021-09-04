@@ -16,3 +16,4 @@ https://github.com/fltk-rs/demos/tree/master/egui-demo
 ## Todo
 - Properly handle resizing the GlutWindow: ✅
 - Support egui_demo_lib crate directly: ✅
+- Clipboard support (via optional features): ✅

@@ -1,6 +1,5 @@
-use fltk::{enums::*, prelude::*, *};
 use fltk_egui as egui_backend;
-use egui_backend::{DpiScaling, egui, gl};
+use egui_backend::{fltk::{enums::*, prelude::*, *}, DpiScaling, egui, gl};
 use std::rc::Rc;
 use std::{cell::RefCell, time::Instant};
 
@@ -44,13 +43,13 @@ fn main() {
             | enums::Event::Resize
             | enums::Event::Move
             | enums::Event::Drag => {
-                egui_backend::input_to_egui(
+                let mut state = state.borrow_mut();
+                state.fuse_input(
                     &mut w,
                     ev,
-                    &mut state.borrow_mut(),
                     &mut painter.borrow_mut(),
                 );
-                true
+				true
             }
             _ => false,
         }
@@ -73,6 +72,7 @@ fn main() {
             gl::ClearColor(0.6, 0.3, 0.3, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT);
         }
+		
         egui::CentralPanel::default().show(&egui_ctx, |ui| {
             ui.heading("My egui Application");
             ui.horizontal(|ui| {
@@ -95,12 +95,7 @@ fn main() {
         });
 
         let (egui_output, paint_cmds) = egui_ctx.end_frame();
-        egui_backend::translate_cursor(&mut glut_win, &mut state.fuse_cursor, egui_output.cursor_icon);
-
-        //Handle cut, copy text from egui
-        if !egui_output.copied_text.is_empty() {
-            egui_backend::copy_to_clipboard(&mut state.clipboard, egui_output.copied_text);
-        }
+        state.fuse_output(&mut glut_win, &egui_output);
 
         let paint_jobs = egui_ctx.tessellate(paint_cmds);
 

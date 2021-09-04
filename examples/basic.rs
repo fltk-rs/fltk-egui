@@ -1,6 +1,5 @@
-use fltk::{enums::*, prelude::*, *};
 use fltk_egui as egui_backend;
-use egui_backend::{DpiScaling, egui, gl};
+use egui_backend::{fltk::{enums::*, prelude::*, *}, DpiScaling, egui, gl};
 use std::rc::Rc;
 use std::{cell::RefCell, time::Instant};
 
@@ -34,10 +33,10 @@ fn main() {
         | enums::Event::Resize
         | enums::Event::Move
         | enums::Event::Drag => {
-            egui_backend::input_to_egui(
+		    let mut state = state.borrow_mut();
+            state.fuse_input(
                 win,
                 ev,
-                &mut state.borrow_mut(),
                 &mut painter.borrow_mut(),
             );
             true
@@ -83,23 +82,20 @@ fn main() {
         });
 
         let (egui_output, paint_cmds) = egui_ctx.end_frame();
-        egui_backend::translate_cursor(&mut win, &mut state.fuse_cursor, egui_output.cursor_icon);
-
-        //Handle cut, copy text from egui
-        if !egui_output.copied_text.is_empty() {
-            egui_backend::copy_to_clipboard(&mut state.clipboard, egui_output.copied_text);
-        }
-
+		state.fuse_output(&mut win, &egui_output);
+		
         let paint_jobs = egui_ctx.tessellate(paint_cmds);
 
         //Draw egui texture
         painter.paint_jobs(None, paint_jobs, &egui_ctx.texture());
-
-        win.swap_buffers();
+		
+		win.swap_buffers();
         win.flush();
-        app::sleep(0.006);
-        app::awake();
-        if quit {
+		
+		if egui_output.needs_repaint {
+			// let egui doing some animations.
+			app::awake()
+        } else if quit {
             break;
         }
     }

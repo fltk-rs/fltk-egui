@@ -2,18 +2,28 @@
 
 // Re-export dependencies.
 pub use egui;
-use fltk::*;
-use fltk::{prelude::*, window::GlutWindow};
-pub mod painter;
-use egui::*;
+pub use fltk;
+use fltk::{prelude::*, window::GlutWindow, enums, app};
+use egui::{pos2, Pos2, Key, Modifiers, Event, RawInput, CursorIcon};
 pub use gl;
-pub use painter::Painter;
-mod clipboard;
+mod painter;
+use painter::Painter;
 
-use clipboard::{
-    ClipboardContext, // TODO: remove
+#[cfg(feature = "clipboard")]
+use copypasta::{
+    ClipboardContext,
     ClipboardProvider,
 };
+
+#[cfg(not(feature = "clipboard"))]
+mod clipboard;
+
+#[cfg(not(feature = "clipboard"))]
+use clipboard::{
+    ClipboardContext,
+    ClipboardProvider,
+};
+
 
 pub fn with_fltk(
     win: &mut fltk::window::GlutWindow,
@@ -23,7 +33,7 @@ pub fn with_fltk(
         DpiScaling::Default => win.pixels_per_unit(),
         DpiScaling::Custom(custom) => custom,
     };
-    let painter = painter::Painter::new(win, scale);
+    let painter = Painter::new(win, scale);
     EguiInputState::new(painter)
 }
 
@@ -67,6 +77,22 @@ impl EguiInputState {
             modifiers: Modifiers::default(),
         };
         (painter, _self)
+    }
+	
+	pub fn fuse_input(
+        &mut self,
+        win: &mut fltk::window::GlutWindow,
+        event: enums::Event,
+        painter: &mut Painter,
+    ) {
+        input_to_egui(win, event, self, painter);
+    }
+
+    pub fn fuse_output(&mut self, win: &mut GlutWindow, egui_output: &egui::Output) {
+        if !egui_output.copied_text.is_empty() {
+            copy_to_clipboard(&mut self.clipboard, egui_output.copied_text.clone());
+        }
+        translate_cursor(win, &mut self.fuse_cursor, egui_output.cursor_icon);
     }
 }
 
@@ -153,13 +179,13 @@ pub fn input_to_egui(
                 };
 
                 if state.modifiers.command && key == Key::C {
-                    println!("copy event");
+                    // println!("copy event");
                     state.input.events.push(Event::Copy)
                 } else if state.modifiers.command && key == Key::X {
-                    println!("cut event");
+                    // println!("cut event");
                     state.input.events.push(Event::Cut)
                 } else if state.modifiers.command && key == Key::V {
-                    println!("paste");
+                    // println!("paste");
                     if let Some(clipboard) = state.clipboard.as_mut() {
                         match clipboard.get_contents() {
                             Ok(contents) => {
@@ -364,7 +390,8 @@ pub fn translate_cursor(
         CursorIcon::NotAllowed | CursorIcon::NoDrop => enums::Cursor::Wait,
         CursorIcon::Wait => enums::Cursor::Wait,
         //There doesn't seem to be a suitable SDL equivalent...
-        CursorIcon::Grab | CursorIcon::Grabbing => enums::Cursor::Move,
+        CursorIcon::Grab => enums::Cursor::Hand,
+        CursorIcon::Grabbing => enums::Cursor::Move,
 
         _ => enums::Cursor::Arrow,
     };
@@ -375,7 +402,7 @@ pub fn translate_cursor(
     }
 }
 
-pub fn init_clipboard() -> Option<ClipboardContext> {
+fn init_clipboard() -> Option<ClipboardContext> {
     match ClipboardContext::new() {
         Ok(clipboard) => Some(clipboard),
         Err(err) => {
