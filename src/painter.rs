@@ -657,7 +657,7 @@ impl Painter {
                     ..
                 }) = user
                 {
-                    gl::DeleteBuffers(1, texture);
+                    gl::DeleteTextures(1, texture);
                 }
             }
             gl::DeleteProgram(self.program);
