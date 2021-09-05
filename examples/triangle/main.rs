@@ -1,9 +1,9 @@
-use egui::{vec2, Color32, Image};
 use egui_backend::{
-    egui,
+    egui::{vec2, Color32, Image},
     fltk::{enums::*, prelude::*, *},
     gl, DpiScaling,
 };
+
 use fltk_egui as egui_backend;
 use std::cell::RefCell;
 use std::rc::Rc;

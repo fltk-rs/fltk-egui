@@ -71,7 +71,6 @@ fn main() {
 
         win.swap_buffers();
         win.flush();
-
         if egui_output.needs_repaint {
             // let egui doing some animations.
             app::awake()
