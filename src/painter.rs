@@ -437,7 +437,7 @@ impl Painter {
                     ..
                 }) = self.user_textures[idx].as_mut()
                 {
-                    unsafe { gl::DeleteBuffers(1, buffer) }
+                    unsafe { gl::DeleteTextures(1, buffer) }
                 }
                 self.user_textures[idx] = None
             }
@@ -665,7 +665,7 @@ impl Painter {
             gl::DeleteBuffers(1, &self.tc_buffer);
             gl::DeleteBuffers(1, &self.color_buffer);
             gl::DeleteBuffers(1, &self.index_buffer);
-            gl::DeleteBuffers(1, &self.egui_texture);
+            gl::DeleteTextures(1, &self.egui_texture);
             gl::DeleteVertexArrays(1, &self.vertex_array);
         }
     }
