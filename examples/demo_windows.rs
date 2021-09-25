@@ -7,8 +7,6 @@ use fltk_egui as egui_backend;
 use std::rc::Rc;
 use std::{cell::RefCell, time::Instant};
 
-// Working fine with Low power (CPU) usage
-
 const SCREEN_WIDTH: u32 = 800;
 const SCREEN_HEIGHT: u32 = 600;
 
@@ -72,7 +70,6 @@ fn main() {
         win.swap_buffers();
         win.flush();
         if egui_output.needs_repaint {
-            // let egui doing some animations.
             app::awake()
         }
     }

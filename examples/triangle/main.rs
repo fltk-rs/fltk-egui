@@ -10,8 +10,6 @@ use std::rc::Rc;
 use std::time::Instant;
 mod triangle;
 
-// Realtime rendering High power (CPU) usage
-
 const SCREEN_WIDTH: u32 = 800;
 const SCREEN_HEIGHT: u32 = 600;
 const PIC_WIDTH: i32 = 320;
