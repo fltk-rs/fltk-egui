@@ -37,6 +37,7 @@ pub enum DpiScaling {
     Custom(f32),
 }
 
+// #[derive(Default)]
 pub struct FusedCursor {
     pub cursor_icon: fltk::enums::Cursor,
 }
@@ -48,6 +49,13 @@ impl FusedCursor {
         Self { cursor_icon: ARROW }
     }
 }
+
+impl Default for FusedCursor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub struct EguiInputState {
     pub fuse_cursor: FusedCursor,
     pub pointer_pos: Pos2,
@@ -262,7 +270,7 @@ pub fn input_to_egui(
 }
 
 pub fn translate_virtual_key_code(key: enums::Key) -> Option<egui::Key> {
-    let matched = match key {
+    match key {
         enums::Key::Left => Some(egui::Key::ArrowLeft),
         enums::Key::Up => Some(egui::Key::ArrowUp),
         enums::Key::Right => Some(egui::Key::ArrowRight),
@@ -278,91 +286,53 @@ pub fn translate_virtual_key_code(key: enums::Key) -> Option<egui::Key> {
         enums::Key::End => Some(egui::Key::End),
         enums::Key::PageDown => Some(egui::Key::PageDown),
         enums::Key::PageUp => Some(egui::Key::PageUp),
-        _ => None,
-    };
-
-    if matched.is_none() {
-        if key == enums::Key::from_char(' ') {
-            Some(egui::Key::Space)
-        } else if key == enums::Key::from_char('\n') {
-            Some(egui::Key::Enter)
-        } else if key == enums::Key::from_char('a') {
-            Some(egui::Key::A)
-        } else if key == enums::Key::from_char('b') {
-            Some(egui::Key::B)
-        } else if key == enums::Key::from_char('c') {
-            Some(egui::Key::C)
-        } else if key == enums::Key::from_char('d') {
-            Some(egui::Key::D)
-        } else if key == enums::Key::from_char('e') {
-            Some(egui::Key::E)
-        } else if key == enums::Key::from_char('f') {
-            Some(egui::Key::F)
-        } else if key == enums::Key::from_char('g') {
-            Some(egui::Key::G)
-        } else if key == enums::Key::from_char('h') {
-            Some(egui::Key::H)
-        } else if key == enums::Key::from_char('i') {
-            Some(egui::Key::I)
-        } else if key == enums::Key::from_char('j') {
-            Some(egui::Key::J)
-        } else if key == enums::Key::from_char('k') {
-            Some(egui::Key::K)
-        } else if key == enums::Key::from_char('l') {
-            Some(egui::Key::L)
-        } else if key == enums::Key::from_char('m') {
-            Some(egui::Key::M)
-        } else if key == enums::Key::from_char('n') {
-            Some(egui::Key::N)
-        } else if key == enums::Key::from_char('o') {
-            Some(egui::Key::O)
-        } else if key == enums::Key::from_char('p') {
-            Some(egui::Key::P)
-        } else if key == enums::Key::from_char('q') {
-            Some(egui::Key::Q)
-        } else if key == enums::Key::from_char('r') {
-            Some(egui::Key::R)
-        } else if key == enums::Key::from_char('s') {
-            Some(egui::Key::S)
-        } else if key == enums::Key::from_char('t') {
-            Some(egui::Key::T)
-        } else if key == enums::Key::from_char('u') {
-            Some(egui::Key::U)
-        } else if key == enums::Key::from_char('v') {
-            Some(egui::Key::V)
-        } else if key == enums::Key::from_char('w') {
-            Some(egui::Key::W)
-        } else if key == enums::Key::from_char('x') {
-            Some(egui::Key::X)
-        } else if key == enums::Key::from_char('y') {
-            Some(egui::Key::Y)
-        } else if key == enums::Key::from_char('z') {
-            Some(egui::Key::Z)
-        } else if key == enums::Key::from_char('0') {
-            Some(egui::Key::Num0)
-        } else if key == enums::Key::from_char('1') {
-            Some(egui::Key::Num1)
-        } else if key == enums::Key::from_char('2') {
-            Some(egui::Key::Num2)
-        } else if key == enums::Key::from_char('3') {
-            Some(egui::Key::Num3)
-        } else if key == enums::Key::from_char('4') {
-            Some(egui::Key::Num4)
-        } else if key == enums::Key::from_char('5') {
-            Some(egui::Key::Num5)
-        } else if key == enums::Key::from_char('6') {
-            Some(egui::Key::Num6)
-        } else if key == enums::Key::from_char('7') {
-            Some(egui::Key::Num7)
-        } else if key == enums::Key::from_char('8') {
-            Some(egui::Key::Num8)
-        } else if key == enums::Key::from_char('9') {
-            Some(egui::Key::Num9)
-        } else {
-            None
+        _ => {
+            if let Some(k) = std::char::from_u32(key.bits() as _) {
+                match k {
+                    ' ' => Some(egui::Key::Space),
+                    '\n' => Some(egui::Key::Enter),
+                    'a' => Some(egui::Key::A),
+                    'b' => Some(egui::Key::B),
+                    'c' => Some(egui::Key::C),
+                    'd' => Some(egui::Key::D),
+                    'e' => Some(egui::Key::E),
+                    'f' => Some(egui::Key::F),
+                    'g' => Some(egui::Key::G),
+                    'h' => Some(egui::Key::H),
+                    'i' => Some(egui::Key::I),
+                    'j' => Some(egui::Key::J),
+                    'k' => Some(egui::Key::K),
+                    'l' => Some(egui::Key::L),
+                    'm' => Some(egui::Key::M),
+                    'n' => Some(egui::Key::N),
+                    'o' => Some(egui::Key::O),
+                    'p' => Some(egui::Key::P),
+                    'q' => Some(egui::Key::Q),
+                    'r' => Some(egui::Key::R),
+                    's' => Some(egui::Key::S),
+                    't' => Some(egui::Key::T),
+                    'u' => Some(egui::Key::U),
+                    'v' => Some(egui::Key::V),
+                    'w' => Some(egui::Key::W),
+                    'x' => Some(egui::Key::X),
+                    'y' => Some(egui::Key::Y),
+                    'z' => Some(egui::Key::Z),
+                    '0' => Some(egui::Key::Num0),
+                    '1' => Some(egui::Key::Num1),
+                    '2' => Some(egui::Key::Num2),
+                    '3' => Some(egui::Key::Num3),
+                    '4' => Some(egui::Key::Num4),
+                    '5' => Some(egui::Key::Num5),
+                    '6' => Some(egui::Key::Num6),
+                    '7' => Some(egui::Key::Num7),
+                    '8' => Some(egui::Key::Num8),
+                    '9' => Some(egui::Key::Num9),
+                    _ => None,
+                }
+            } else {
+                None
+            }
         }
-    } else {
-        matched
     }
 }
 
@@ -382,7 +352,6 @@ pub fn translate_cursor(
         CursorIcon::Crosshair => enums::Cursor::Cross,
         CursorIcon::NotAllowed | CursorIcon::NoDrop => enums::Cursor::Wait,
         CursorIcon::Wait => enums::Cursor::Wait,
-        //There doesn't seem to be a suitable SDL equivalent...
         CursorIcon::Grab => enums::Cursor::Hand,
         CursorIcon::Grabbing => enums::Cursor::Move,
 
