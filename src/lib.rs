@@ -9,15 +9,6 @@ pub use gl;
 mod painter;
 use painter::Painter;
 
-#[cfg(feature = "clipboard")]
-use copypasta::{ClipboardContext, ClipboardProvider};
-
-#[cfg(not(feature = "clipboard"))]
-mod clipboard;
-
-#[cfg(not(feature = "clipboard"))]
-use clipboard::{ClipboardContext, ClipboardProvider};
-
 pub fn with_fltk(
     win: &mut fltk::window::GlutWindow,
     scale: DpiScaling,
@@ -59,7 +50,6 @@ impl Default for FusedCursor {
 pub struct EguiInputState {
     pub fuse_cursor: FusedCursor,
     pub pointer_pos: Pos2,
-    pub clipboard: Option<ClipboardContext>,
     pub input: RawInput,
     pub modifiers: Modifiers,
 }
@@ -69,7 +59,6 @@ impl EguiInputState {
         let _self = EguiInputState {
             fuse_cursor: FusedCursor::new(),
             pointer_pos: Pos2::new(0f32, 0f32),
-            clipboard: init_clipboard(),
             input: egui::RawInput {
                 screen_rect: Some(painter.screen_rect),
                 pixels_per_point: Some(painter.pixels_per_point),
@@ -91,7 +80,7 @@ impl EguiInputState {
 
     pub fn fuse_output(&mut self, win: &mut GlutWindow, egui_output: &egui::Output) {
         if !egui_output.copied_text.is_empty() {
-            copy_to_clipboard(&mut self.clipboard, egui_output.copied_text.clone());
+            app::copy(&egui_output.copied_text);
         }
         translate_cursor(win, &mut self.fuse_cursor, egui_output.cursor_icon);
     }
@@ -114,6 +103,7 @@ pub fn input_to_egui(
     state: &mut EguiInputState,
     painter: &mut Painter,
 ) {
+    let inp = fltk::input::Input::default();
     let (x, y) = app::event_coords();
     let pixels_per_point = painter.pixels_per_point;
     match event {
@@ -178,43 +168,20 @@ pub fn input_to_egui(
                     //TOD: Test on both windows and mac
                     command: (keymod & enums::EventState::Command == enums::EventState::Command),
                 };
-
-                if state.modifiers.command && key == Key::C {
-                    // println!("copy event");
-                    state.input.events.push(Event::Copy)
-                } else if state.modifiers.command && key == Key::X {
-                    // println!("cut event");
-                    state.input.events.push(Event::Cut)
-                } else if state.modifiers.command && key == Key::V {
-                    // println!("paste");
-                    if let Some(clipboard) = state.clipboard.as_mut() {
-                        match clipboard.get_contents() {
-                            Ok(contents) => {
-                                state.input.events.push(Event::Text(contents));
-                            }
-                            Err(err) => {
-                                eprintln!("Paste error: {}", err);
-                            }
-                        }
-                    }
-                } else {
-                    state.input.events.push(Event::Key {
-                        key,
-                        pressed: false,
-                        modifiers: state.modifiers,
-                    });
+                if state.modifiers.command && key == Key::V {
+                    app::paste(&inp);
+                    state.input.events.push(Event::Text(inp.value()));
                 }
             }
         }
 
         enums::Event::KeyDown => {
-            let event_state = app::event_state();
             if let Some(c) = app::event_text().chars().next() {
-                if is_printable_char(c)
-                    && event_state != enums::EventState::Ctrl
-                    && event_state != enums::EventState::Meta
-                {
-                    state.input.events.push(Event::Text(app::event_text()));
+                if let Some(del) = app::compose() {
+                    state.input.events.push(Event::Text(c.to_string()));
+                    if del != 0 {
+                        app::compose_reset();
+                    }
                 }
             }
             if let Some(key) = translate_virtual_key_code(app::event_key()) {
@@ -234,6 +201,20 @@ pub fn input_to_egui(
                     pressed: true,
                     modifiers: state.modifiers,
                 });
+
+                if state.modifiers.command && key == Key::C {
+                    // println!("copy event");
+                    state.input.events.push(Event::Copy)
+                } else if state.modifiers.command && key == Key::X {
+                    // println!("cut event");
+                    state.input.events.push(Event::Cut)
+                } else {
+                    state.input.events.push(Event::Key {
+                        key,
+                        pressed: false,
+                        modifiers: state.modifiers,
+                    })
+                }
             }
         }
 
@@ -342,7 +323,9 @@ pub fn translate_cursor(
     cursor_icon: egui::CursorIcon,
 ) {
     let tmp_icon = match cursor_icon {
+        CursorIcon::None => enums::Cursor::None,
         CursorIcon::Default => enums::Cursor::Arrow,
+        CursorIcon::Help => enums::Cursor::Help,
         CursorIcon::PointingHand => enums::Cursor::Hand,
         CursorIcon::ResizeHorizontal => enums::Cursor::WE,
         CursorIcon::ResizeNeSw => enums::Cursor::NESW,
@@ -352,8 +335,10 @@ pub fn translate_cursor(
         CursorIcon::Crosshair => enums::Cursor::Cross,
         CursorIcon::NotAllowed | CursorIcon::NoDrop => enums::Cursor::Wait,
         CursorIcon::Wait => enums::Cursor::Wait,
+        CursorIcon::Progress => enums::Cursor::Wait,
         CursorIcon::Grab => enums::Cursor::Hand,
         CursorIcon::Grabbing => enums::Cursor::Move,
+        CursorIcon::Move => enums::Cursor::Move,
 
         _ => enums::Cursor::Arrow,
     };
@@ -361,24 +346,5 @@ pub fn translate_cursor(
     if tmp_icon != fused.cursor_icon {
         fused.cursor_icon = tmp_icon;
         win.set_cursor(tmp_icon)
-    }
-}
-
-fn init_clipboard() -> Option<ClipboardContext> {
-    match ClipboardContext::new() {
-        Ok(clipboard) => Some(clipboard),
-        Err(err) => {
-            eprintln!("Failed to initialize clipboard: {}", err);
-            None
-        }
-    }
-}
-
-pub fn copy_to_clipboard(clipboard: &mut Option<ClipboardContext>, copy_text: String) {
-    if let Some(clipboard) = clipboard.as_mut() {
-        let result = clipboard.set_contents(copy_text);
-        if result.is_err() {
-            dbg!("Unable to set clipboard content.");
-        }
     }
 }
