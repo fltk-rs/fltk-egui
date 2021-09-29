@@ -8,7 +8,7 @@
     ```toml
     [dependencies]
     fltk = { version = "1.2.4", features = ["enable-glwindow"] }
-    fltk-egui = "0.2"
+    fltk-egui = "0.3"
     ```
 
     The basic premise is that egui is an immediate mode gui, while FLTK is retained. 
