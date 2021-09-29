@@ -277,7 +277,7 @@ pub fn input_to_egui(
 }
 
 /// Translates key codes
-fn translate_virtual_key_code(key: enums::Key) -> Option<egui::Key> {
+pub fn translate_virtual_key_code(key: enums::Key) -> Option<egui::Key> {
     match key {
         enums::Key::Left => Some(egui::Key::ArrowLeft),
         enums::Key::Up => Some(egui::Key::ArrowUp),
@@ -345,7 +345,7 @@ fn translate_virtual_key_code(key: enums::Key) -> Option<egui::Key> {
 }
 
 /// Translates FLTK cursor to Egui cursors
-fn translate_cursor(
+pub fn translate_cursor(
     win: &mut GlutWindow,
     fused: &mut FusedCursor,
     cursor_icon: egui::CursorIcon,
