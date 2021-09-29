@@ -105,6 +105,8 @@ const FS_SRC: &str = r#"
     }
 "#;
 
+
+/// Peforms egui's painting in the GlutWindow
 pub struct Painter {
     vertex_array: GLuint,
     program: GLuint,
@@ -123,7 +125,7 @@ pub struct Painter {
     pub screen_rect: Rect,
 }
 
-pub fn compile_shader(src: &str, ty: GLenum) -> GLuint {
+fn compile_shader(src: &str, ty: GLenum) -> GLuint {
     let shader;
     unsafe {
         shader = gl::CreateShader(ty);
@@ -157,7 +159,7 @@ pub fn compile_shader(src: &str, ty: GLenum) -> GLuint {
     shader
 }
 
-pub fn link_program(vs: GLuint, fs: GLuint) -> GLuint {
+fn link_program(vs: GLuint, fs: GLuint) -> GLuint {
     unsafe {
         let program = gl::CreateProgram();
         gl::AttachShader(program, vs);
@@ -189,6 +191,7 @@ pub fn link_program(vs: GLuint, fs: GLuint) -> GLuint {
 }
 
 impl Painter {
+    /// Constructs a new painter
     pub fn new(window: &mut window::GlutWindow, scale: f32) -> Painter {
         unsafe {
             let mut egui_texture = 0;
@@ -245,6 +248,7 @@ impl Painter {
         }
     }
 
+    /// Updates the screen rect
     pub fn update_screen_rect(&mut self, size: (i32, i32)) {
         self.canvas_size = size;
         let (x, y) = size;
@@ -252,6 +256,7 @@ impl Painter {
         self.screen_rect = Rect::from_min_size(Default::default(), rect);
     }
 
+    /// Creates a new user texture
     pub fn new_user_texture(
         &mut self,
         size: (usize, usize),
@@ -397,6 +402,7 @@ impl Painter {
         }
     }
 
+    /// Updates texture data
     pub fn update_user_texture_data(&mut self, texture_id: egui::TextureId, pixels: &[Color32]) {
         match texture_id {
             egui::TextureId::Egui => {}
@@ -418,6 +424,7 @@ impl Painter {
         }
     }
 
+    /// Frees the user texture
     pub fn free_user_texture(&mut self, id: egui::TextureId) {
         if let egui::TextureId::User(id) = id {
             let idx = id as usize;
@@ -434,6 +441,7 @@ impl Painter {
         }
     }
 
+    /// Sents the paint jobs to the GlutWindow
     pub fn paint_jobs(
         &mut self,
         bg_color: Option<Color32>,
@@ -638,6 +646,7 @@ impl Painter {
         }
     }
 
+    /// Peforms cleanup of the painter and Gl context
     pub fn cleanup(&self) {
         unsafe {
             gl::DeleteSync(self.gl_sync_fence);

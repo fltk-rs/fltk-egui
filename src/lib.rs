@@ -1,3 +1,31 @@
+/*!
+    # fltk-egui
+
+    An FLTK backend for Egui using a GlutWindow. The code is largely based on https://github.com/ArjunNair/egui_sdl2_gl modified for fltk-rs.
+
+    ## Usage
+    Add to your Cargo.toml:
+    ```toml
+    [dependencies]
+    fltk = { version = "1.2.4", features = ["enable-glwindow"] }
+    fltk-egui = "0.2"
+    ```
+
+    The basic premise is that egui is an immediate mode gui, while FLTK is retained. 
+    To be able to run Egui code, events and redrawing would need to be handled/done in the FLTK event loop. 
+    The events are those of the GlutWindow, which are sent to egui's event handlers. 
+    Other FLTK widgets can function also normally since there is no interference from Egui.
+
+    ## Examples
+    To run the examples, just run:
+    ```
+    $ cargo run --example demo_windows
+    $ cargo run --example triangle
+    $ cargo run --example basic
+    $ cargo run --example embedded
+    ```
+*/
+
 #![warn(clippy::all)]
 
 // Re-export dependencies.
@@ -9,6 +37,8 @@ pub use gl;
 mod painter;
 use painter::Painter;
 
+/// Construct the backend.
+/// Requires the DpiScaling, which can be Default or Custom(f32)
 pub fn with_fltk(
     win: &mut fltk::window::GlutWindow,
     scale: DpiScaling,
@@ -21,6 +51,7 @@ pub fn with_fltk(
     EguiInputState::new(painter)
 }
 
+/// The scaling factors of the app
 pub enum DpiScaling {
     /// Default DPI Scale by fltk, usually 1.0
     Default,
@@ -28,7 +59,7 @@ pub enum DpiScaling {
     Custom(f32),
 }
 
-// #[derive(Default)]
+/// The default cursor
 pub struct FusedCursor {
     pub cursor_icon: fltk::enums::Cursor,
 }
@@ -36,6 +67,7 @@ pub struct FusedCursor {
 const ARROW: enums::Cursor = enums::Cursor::Arrow;
 
 impl FusedCursor {
+    /// Construct a new cursor
     pub fn new() -> Self {
         Self { cursor_icon: ARROW }
     }
@@ -47,6 +79,7 @@ impl Default for FusedCursor {
     }
 }
 
+/// Shuttles FLTK's input and events to Egui
 pub struct EguiInputState {
     pub fuse_cursor: FusedCursor,
     pub pointer_pos: Pos2,
@@ -55,6 +88,7 @@ pub struct EguiInputState {
 }
 
 impl EguiInputState {
+    /// Construct a new state
     pub fn new(painter: Painter) -> (Painter, EguiInputState) {
         let _self = EguiInputState {
             fuse_cursor: FusedCursor::new(),
@@ -69,6 +103,7 @@ impl EguiInputState {
         (painter, _self)
     }
 
+    /// Conveniece method bundling the necessary components for input/event handling
     pub fn fuse_input(
         &mut self,
         win: &mut fltk::window::GlutWindow,
@@ -78,6 +113,7 @@ impl EguiInputState {
         input_to_egui(win, event, self, painter);
     }
 
+    /// Convenience method for outputting what egui emits each frame
     pub fn fuse_output(&mut self, win: &mut GlutWindow, egui_output: &egui::Output) {
         if !egui_output.copied_text.is_empty() {
             app::copy(&egui_output.copied_text);
@@ -86,17 +122,7 @@ impl EguiInputState {
     }
 }
 
-// copied from https://github.com/not-fl3/egui-miniquad/blob/842e127d05e4c921da5ae1e797e28e848a220bea/src/input.rs#L25
-pub fn is_printable_char(chr: char) -> bool {
-    #![allow(clippy::manual_range_contains)]
-
-    let is_in_private_use_area = '\u{e000}' <= chr && chr <= '\u{f8ff}'
-        || '\u{f0000}' <= chr && chr <= '\u{ffffd}'
-        || '\u{100000}' <= chr && chr <= '\u{10fffd}';
-
-    !is_in_private_use_area && !chr.is_ascii_control()
-}
-
+/// Handles input/events from FLTK
 pub fn input_to_egui(
     win: &mut fltk::window::GlutWindow,
     event: enums::Event,
@@ -250,7 +276,8 @@ pub fn input_to_egui(
     }
 }
 
-pub fn translate_virtual_key_code(key: enums::Key) -> Option<egui::Key> {
+/// Translates key codes
+fn translate_virtual_key_code(key: enums::Key) -> Option<egui::Key> {
     match key {
         enums::Key::Left => Some(egui::Key::ArrowLeft),
         enums::Key::Up => Some(egui::Key::ArrowUp),
@@ -317,7 +344,8 @@ pub fn translate_virtual_key_code(key: enums::Key) -> Option<egui::Key> {
     }
 }
 
-pub fn translate_cursor(
+/// Translates FLTK cursor to Egui cursors
+fn translate_cursor(
     win: &mut GlutWindow,
     fused: &mut FusedCursor,
     cursor_icon: egui::CursorIcon,
