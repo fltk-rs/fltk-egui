@@ -516,8 +516,8 @@ impl Painter {
                 }
             }
 
-            gl::Disable(gl::SCISSOR_TEST);
             gl::Disable(gl::FRAMEBUFFER_SRGB);
+            gl::Disable(gl::SCISSOR_TEST);
             gl::Disable(gl::BLEND);
         }
     }
@@ -643,9 +643,10 @@ impl Painter {
                 gl::UNSIGNED_SHORT,
                 ptr::null(),
             );
-            gl::DisableVertexAttribArray(a_srgba_loc);
-            gl::DisableVertexAttribArray(a_tc_loc);
+
             gl::DisableVertexAttribArray(a_pos_loc);
+            gl::DisableVertexAttribArray(a_tc_loc);
+            gl::DisableVertexAttribArray(a_srgba_loc);
         }
     }
 
