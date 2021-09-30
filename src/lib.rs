@@ -11,9 +11,9 @@
     fltk-egui = "0.3"
     ```
 
-    The basic premise is that egui is an immediate mode gui, while FLTK is retained. 
-    To be able to run Egui code, events and redrawing would need to be handled/done in the FLTK event loop. 
-    The events are those of the GlutWindow, which are sent to egui's event handlers. 
+    The basic premise is that egui is an immediate mode gui, while FLTK is retained.
+    To be able to run Egui code, events and redrawing would need to be handled/done in the FLTK event loop.
+    The events are those of the GlutWindow, which are sent to egui's event handlers.
     Other FLTK widgets can function also normally since there is no interference from Egui.
 
     ## Examples
