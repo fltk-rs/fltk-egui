@@ -42,11 +42,12 @@ fn main() {
         egui_backend::with_fltk(&mut glut_win, DpiScaling::Custom(1.5));
     let mut egui_ctx = egui::CtxRef::default();
 
-    let state_rc = Rc::from(RefCell::from(egui_input_state));
-    let painter_rc = Rc::from(RefCell::from(painter));
-    let state = state_rc.clone();
-    let painter = painter_rc.clone();
+    let state = Rc::from(RefCell::from(egui_input_state));
+    let painter = Rc::from(RefCell::from(painter));
+
     main_win.handle({
+        let state = state.clone();
+        let painter = painter.clone();
         let mut w = glut_win.clone();
         move |_, ev| match ev {
             enums::Event::Push
@@ -71,8 +72,8 @@ fn main() {
     let mut quit = false;
 
     while a.wait() {
-        let mut state = state_rc.borrow_mut();
-        let mut painter = painter_rc.borrow_mut();
+        let mut state = state.borrow_mut();
+        let mut painter = painter.borrow_mut();
         state.input.time = Some(start_time.elapsed().as_secs_f64());
         egui_ctx.begin_frame(state.input.take());
         frm.set_label(&format!("Hello {}", &name));

@@ -27,11 +27,13 @@ fn main() {
     let (painter, egui_input_state) = egui_backend::with_fltk(&mut win, DpiScaling::Default);
     let mut egui_ctx = egui::CtxRef::default();
 
-    let state_rc = Rc::from(RefCell::from(egui_input_state));
-    let painter_rc = Rc::from(RefCell::from(painter));
-    let state = state_rc.clone();
-    let painter = painter_rc.clone();
-    win.handle(move |win, ev| match ev {
+    let state = Rc::from(RefCell::from(egui_input_state));
+    let painter = Rc::from(RefCell::from(painter));
+
+    win.handle({
+        let state = state.clone();
+        let painter = painter.clone();
+        move |win, ev| match ev {
         enums::Event::Push
         | enums::Event::Released
         | enums::Event::KeyDown
@@ -45,7 +47,7 @@ fn main() {
             true
         }
         _ => false,
-    });
+    }});
 
     let start_time = Instant::now();
     let mut srgba: Vec<Color32> = Vec::new();
@@ -61,7 +63,7 @@ fn main() {
 
     //The user texture is what allows us to mix Egui and GL rendering contexts.
     //Egui just needs the texture id, as the actual texture is managed by the backend.
-    let chip8_tex_id = painter_rc.borrow_mut().new_user_texture(
+    let chip8_tex_id = painter.borrow_mut().new_user_texture(
         (PIC_WIDTH as usize, PIC_HEIGHT as usize),
         &srgba,
         false,
@@ -78,8 +80,8 @@ fn main() {
     let mut quit = false;
 
     while a.wait() {
-        let mut state = state_rc.borrow_mut();
-        let mut painter = painter_rc.borrow_mut();
+        let mut state = state.borrow_mut();
+        let mut painter = painter.borrow_mut();
         state.input.time = Some(start_time.elapsed().as_secs_f64());
         egui_ctx.begin_frame(state.input.take());
 
