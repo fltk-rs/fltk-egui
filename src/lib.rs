@@ -7,7 +7,6 @@
     Add to your Cargo.toml:
     ```toml
     [dependencies]
-    fltk = { version = "1.2.4", features = ["enable-glwindow"] }
     fltk-egui = "0.3"
     ```
 

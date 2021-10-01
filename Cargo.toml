@@ -1,6 +1,6 @@
 [package]
 name = "fltk-egui"
-version = "0.3.2"
+version = "0.3.3"
 edition = "2018"
 authors = ["MoAlyousef <mohammed.alyousef@neurosrg.com>"]
 description = "FLTK backend for egui"
@@ -22,3 +22,4 @@ egui_demo_lib = "0.14"
 
 [features]
 fltk-bundled = ["fltk/fltk-bundled"]
+no-pango = ["fltk/no-pango"]
