@@ -12,7 +12,10 @@ env:
 jobs:
   build:
 
-    runs-on: [windows-latest, macos-latest, ubuntu-18.04]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
 
     steps:
     - name: Download deps
