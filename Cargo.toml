@@ -19,3 +19,6 @@ egui = "0.14"
 # for the demo_windows example
 [dev-dependencies]
 egui_demo_lib = "0.14"
+
+[features]
+fltk-bundled = ["fltk/fltk-bundled"]
