@@ -34,7 +34,7 @@ pub use fltk;
 use fltk::{app, enums, prelude::*, window::GlutWindow};
 pub use gl;
 mod painter;
-use painter::Painter;
+pub use painter::Painter;
 
 /// Construct the backend.
 /// Requires the DpiScaling, which can be Default or Custom(f32)
