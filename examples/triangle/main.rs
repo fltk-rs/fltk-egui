@@ -34,20 +34,21 @@ fn main() {
         let state = state.clone();
         let painter = painter.clone();
         move |win, ev| match ev {
-        enums::Event::Push
-        | enums::Event::Released
-        | enums::Event::KeyDown
-        | enums::Event::KeyUp
-        | enums::Event::MouseWheel
-        | enums::Event::Resize
-        | enums::Event::Move
-        | enums::Event::Drag => {
-            let mut state = state.borrow_mut();
-            state.fuse_input(win, ev, &mut painter.borrow_mut());
-            true
+            enums::Event::Push
+            | enums::Event::Released
+            | enums::Event::KeyDown
+            | enums::Event::KeyUp
+            | enums::Event::MouseWheel
+            | enums::Event::Resize
+            | enums::Event::Move
+            | enums::Event::Drag => {
+                let mut state = state.borrow_mut();
+                state.fuse_input(win, ev, &mut painter.borrow_mut());
+                true
+            }
+            _ => false,
         }
-        _ => false,
-    }});
+    });
 
     let start_time = Instant::now();
     let mut srgba: Vec<Color32> = Vec::new();
