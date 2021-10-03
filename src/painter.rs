@@ -283,6 +283,24 @@ impl Painter {
         id
     }
 
+    /// Creates a new user texture from rgba8
+    pub fn new_user_texture_rgba8(
+        &mut self,
+        size: (usize, usize),
+        rgba8_pixels: Vec<u8>,
+        filtering: bool,
+    ) -> egui::TextureId {
+        let id = egui::TextureId::User(self.user_textures.len() as u64);
+        self.user_textures.push(Some(UserTexture {
+            size,
+            pixels: rgba8_pixels,
+            texture: None,
+            filtering,
+            dirty: true,
+        }));
+        id
+    }
+
     fn upload_egui_texture(&mut self, texture: &Texture) {
         if self.egui_texture_version == Some(texture.version) {
             return; // No change
@@ -416,6 +434,26 @@ impl Painter {
                             user_textures.pixels.push(p[2]);
                             user_textures.pixels.push(p[3]);
                         }
+                        user_textures.dirty = true
+                    }
+                }
+            }
+        }
+    }
+
+    /// Updates texture rgba8 data
+    pub fn update_user_texture_rgba8_data(
+        &mut self,
+        texture_id: egui::TextureId,
+        rgba8_pixels: Vec<u8>,
+    ) {
+        match texture_id {
+            egui::TextureId::Egui => {}
+            egui::TextureId::User(id) => {
+                let id = id as usize;
+                if id < self.user_textures.len() {
+                    if let Some(user_textures) = self.user_textures[id].as_mut() {
+                        user_textures.pixels = rgba8_pixels;
                         user_textures.dirty = true
                     }
                 }
