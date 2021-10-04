@@ -375,3 +375,52 @@ pub fn translate_cursor(
         win.set_cursor(tmp_icon)
     }
 }
+
+pub trait EguiImageConvertible<I>
+where
+    I: ImageExt,
+{
+    fn to_egui_image(self, painter: &mut Painter, new_size: (u32, u32), filtering: bool) -> Result<egui::Image, FltkError>;
+}
+
+impl<I> EguiImageConvertible<I> for I
+where
+    I: ImageExt,
+{
+    fn to_egui_image(self, painter: &mut Painter, new_size: (u32, u32), filtering: bool) -> Result<egui::Image, FltkError> {
+        let size = (self.data_w() as usize, self.data_h() as usize);
+        let image = egui::Image::new(
+            painter.new_user_texture_rgba8(
+                size,
+                self.to_rgb()?
+                    .convert(enums::ColorDepth::Rgba8)?
+                    .to_rgb_data(),
+                filtering,
+            ),
+            egui::vec2(new_size.0 as _, new_size.1 as _),
+        );
+        Ok(image)
+    }
+}
+
+pub trait EguiSvgConvertible {
+    fn to_egui_image(self, painter: &mut Painter, new_size: (u32, u32), filtering: bool) -> Result<egui::Image, FltkError>;
+}
+
+impl EguiSvgConvertible for fltk::image::SvgImage {
+    fn to_egui_image(mut self, painter: &mut Painter, new_size: (u32, u32), filtering: bool) -> Result<egui::Image, FltkError> {
+        self.normalize();
+        let size = (self.data_w() as usize, self.data_h() as usize);
+        let image = egui::Image::new(
+            painter.new_user_texture_rgba8(
+                size,
+                self.to_rgb()?
+                    .convert(enums::ColorDepth::Rgba8)?
+                    .to_rgb_data(),
+                filtering,
+            ),
+            egui::vec2(new_size.0 as _, new_size.1 as _),
+        );
+        Ok(image)
+    }
+}
