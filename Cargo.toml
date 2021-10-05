@@ -12,7 +12,7 @@ readme = "README.md"
 license = "MIT"
 
 [dependencies]
-fltk = { version = "1.2.5", features = ["enable-glwindow"] }
+fltk = { version = "1.2.6", features = ["enable-glwindow"] }
 gl = "0.14"
 egui = "0.14"
 

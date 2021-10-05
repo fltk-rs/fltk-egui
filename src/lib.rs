@@ -294,7 +294,7 @@ pub fn translate_virtual_key_code(key: enums::Key) -> Option<egui::Key> {
         enums::Key::PageDown => Some(egui::Key::PageDown),
         enums::Key::PageUp => Some(egui::Key::PageUp),
         _ => {
-            if let Some(k) = std::char::from_u32(key.bits() as _) {
+            if let Some(k) = key.to_char() {
                 match k {
                     ' ' => Some(egui::Key::Space),
                     '\n' => Some(egui::Key::Enter),
