@@ -12,7 +12,7 @@ const SCREEN_HEIGHT: u32 = 600;
 
 fn main() {
     let a = app::App::default();
-    let mut win = window::GlutWindow::new(100, 100, SCREEN_WIDTH as _, SCREEN_HEIGHT as _, None);
+    let mut win = window::GlWindow::new(100, 100, SCREEN_WIDTH as _, SCREEN_HEIGHT as _, None);
     win.set_mode(Mode::Opengl3);
     win.end();
     win.make_resizable(true);
@@ -46,7 +46,9 @@ fn main() {
     });
 
     let image = image::JpegImage::load("screenshots/egui.jpg").unwrap();
-    let image = image.to_egui_image(&mut painter.borrow_mut(), (300, 300), false).unwrap();
+    let (image, _) = image
+        .to_egui_image(&mut painter.borrow_mut(), (300, 300), false)
+        .unwrap();
 
     let start_time = Instant::now();
     let mut quit = false;
@@ -74,13 +76,13 @@ fn main() {
             }
         });
 
-        let (egui_output, paint_cmds) = egui_ctx.end_frame();
+        let (egui_output, shapes) = egui_ctx.end_frame();
         state.fuse_output(&mut win, &egui_output);
 
-        let paint_jobs = egui_ctx.tessellate(paint_cmds);
+        let meshes = egui_ctx.tessellate(shapes);
 
         //Draw egui texture
-        painter.paint_jobs(None, paint_jobs, &egui_ctx.texture());
+        painter.paint_jobs(None, meshes, &egui_ctx.texture());
 
         win.swap_buffers();
         win.flush();

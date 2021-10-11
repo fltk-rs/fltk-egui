@@ -12,9 +12,13 @@ readme = "README.md"
 license = "MIT"
 
 [dependencies]
-fltk = { version = "1.2.6", features = ["enable-glwindow"] }
-gl = "0.14"
+chrono = "0.4"
 egui = "0.14"
+epi = "0.14"
+# for internal use case faster build (bundled).
+# fltk = { version = "1.2", features = ["enable-glwindow", "fltk-bundled"] }
+fltk = { version = "1.2", features = ["enable-glwindow"] }
+gl = "0.14"
 
 # for the demo_windows example
 [dev-dependencies]
