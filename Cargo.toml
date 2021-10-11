@@ -12,7 +12,6 @@ readme = "README.md"
 license = "MIT"
 
 [dependencies]
-# fltk = { version = "1.2", features = ["enable-glwindow"] }
 chrono = "0.4"
 egui = "0.14"
 epi = "0.14"
