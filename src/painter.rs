@@ -461,7 +461,9 @@ impl Painter {
         }
     }
 
-    /// Frees the user texture
+    /// Frees the user texture,
+    /// 
+    /// fn free_user_texture() and fn free() implemented from epi both are basically the same. 
     pub fn free_user_texture(&mut self, id: egui::TextureId) {
         if let egui::TextureId::User(id) = id {
             let idx = id as usize;
@@ -471,9 +473,9 @@ impl Painter {
                     ..
                 }) = self.user_textures[idx].as_mut()
                 {
-                    unsafe { gl::DeleteTextures(1, texture) }
+                    unsafe { gl::DeleteTextures(1, &*texture) }
                 }
-                self.user_textures[idx] = None
+                self.user_textures[idx] = None;
             }
         }
     }
@@ -549,8 +551,6 @@ impl Painter {
                     );
 
                     self.paint_mesh(&mesh);
-                } else {
-                    continue;
                 }
             }
 
@@ -705,6 +705,20 @@ impl Painter {
             gl::DeleteTextures(1, &self.egui_texture);
             gl::DeleteVertexArrays(1, &self.vertex_array);
         }
+    }
+}
+
+impl epi::TextureAllocator for Painter {
+    fn alloc_srgba_premultiplied(
+        &mut self,
+        size: (usize, usize),
+        srgba_pixels: &[egui::Color32],
+    ) -> egui::TextureId {
+        self.new_user_texture(size, srgba_pixels, true)
+    }
+
+    fn free(&mut self, id: egui::TextureId) {
+        self.free_user_texture(id)
     }
 }
 

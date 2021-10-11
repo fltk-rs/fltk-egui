@@ -1,6 +1,6 @@
 # fltk-egui
 
-An FLTK backend for Egui using a GlutWindow. The code is largely based on https://github.com/ArjunNair/egui_sdl2_gl modified for fltk-rs.
+An FLTK backend for Egui using a GlWindow. The code is largely based on https://github.com/ArjunNair/egui_sdl2_gl modified for fltk-rs.
 
 ## Usage
 Add to your Cargo.toml:
@@ -9,7 +9,7 @@ Add to your Cargo.toml:
 fltk-egui = "0.3"
 ```
 
-The basic premise is that egui is an immediate mode gui, while FLTK is retained. To be able to run Egui code, events and redrawing would need to be handled/done in the FLTK event loop. The events are those of the GlutWindow, which are sent to egui's event handlers. Other FLTK widgets can function also normally since there is no interference from Egui.
+The basic premise is that egui is an immediate mode gui, while FLTK is retained. To be able to run Egui code, events and redrawing would need to be handled/done in the FLTK event loop. The events are those of the GlWindow, which are sent to egui's event handlers. Other FLTK widgets can function also normally since there is no interference from Egui.
 Please check the [basic example](examples/basic.rs).
 
 ## Examples
@@ -28,6 +28,6 @@ https://github.com/fltk-rs/demos/tree/master/egui-demo
 - ![alt_test](screenshots/egui.jpg)
 
 ## Todo
-- Properly handle resizing the GlutWindow: ✅
+- Properly handle resizing the GlWindow: ✅
 - Support egui_demo_lib crate directly: ✅
 - Clipboard support: ✅

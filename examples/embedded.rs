@@ -15,7 +15,7 @@ fn main() {
     app::get_system_colors();
     app::set_font_size(20);
     let mut main_win = window::Window::new(100, 100, SCREEN_WIDTH as _, SCREEN_HEIGHT as _, None);
-    let mut glut_win = window::GlutWindow::new(5, 5, main_win.w() - 200, main_win.h() - 10, None);
+    let mut glut_win = window::GlWindow::new(5, 5, main_win.w() - 200, main_win.h() - 10, None);
     glut_win.set_mode(Mode::Opengl3);
     glut_win.end();
     let mut col = group::Flex::default()
@@ -106,13 +106,13 @@ fn main() {
             }
         });
 
-        let (egui_output, paint_cmds) = egui_ctx.end_frame();
+        let (egui_output, shapes) = egui_ctx.end_frame();
         state.fuse_output(&mut glut_win, &egui_output);
 
-        let paint_jobs = egui_ctx.tessellate(paint_cmds);
+        let meshes = egui_ctx.tessellate(shapes);
 
         //Draw egui texture
-        painter.paint_jobs(None, paint_jobs, &egui_ctx.texture());
+        painter.paint_jobs(None, meshes, &egui_ctx.texture());
 
         glut_win.swap_buffers();
         glut_win.flush();

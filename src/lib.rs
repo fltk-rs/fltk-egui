@@ -1,7 +1,7 @@
 /*!
     # fltk-egui
 
-    An FLTK backend for Egui using a GlutWindow. The code is largely based on https://github.com/ArjunNair/egui_sdl2_gl modified for fltk-rs.
+    An FLTK backend for Egui using a GlWindow. The code is largely based on https://github.com/ArjunNair/egui_sdl2_gl modified for fltk-rs.
 
     ## Usage
     Add to your Cargo.toml:
@@ -12,7 +12,7 @@
 
     The basic premise is that egui is an immediate mode gui, while FLTK is retained.
     To be able to run Egui code, events and redrawing would need to be handled/done in the FLTK event loop.
-    The events are those of the GlutWindow, which are sent to egui's event handlers.
+    The events are those of the GlWindow, which are sent to egui's event handlers.
     Other FLTK widgets can function also normally since there is no interference from Egui.
 
     ## Examples
@@ -27,27 +27,56 @@
 
 #![warn(clippy::all)]
 
+use std::time::Instant;
+
+use chrono::Timelike;
 // Re-export dependencies.
 pub use egui;
 use egui::{pos2, CursorIcon, Event, Key, Modifiers, Pos2, RawInput};
+pub use epi;
 pub use fltk;
-use fltk::{app, enums, prelude::*, window::GlutWindow};
+use fltk::{
+    app, enums,
+    prelude::{FltkError, ImageExt, InputExt, WidgetExt, WindowExt},
+    window::GlWindow,
+};
 pub use gl;
 mod painter;
 pub use painter::Painter;
 
 /// Construct the backend.
 /// Requires the DpiScaling, which can be Default or Custom(f32)
-pub fn with_fltk(
-    win: &mut fltk::window::GlutWindow,
-    scale: DpiScaling,
-) -> (Painter, EguiInputState) {
+pub fn with_fltk(win: &mut GlWindow, scale: DpiScaling) -> (Painter, EguiInputState) {
     let scale = match scale {
         DpiScaling::Default => win.pixels_per_unit(),
         DpiScaling::Custom(custom) => custom,
     };
     let painter = Painter::new(win, scale);
     EguiInputState::new(painter)
+}
+/// Time of day as seconds since midnight. Used for clock in demo app.
+pub fn get_seconds_since_midnight() -> f64 {
+    let time = chrono::Local::now().time();
+    time.num_seconds_from_midnight() as f64 + 1e-9 * (time.nanosecond() as f64)
+}
+
+/// Frame time for FPS.
+pub fn get_frame_time(start_time: Instant) -> f32 {
+    (Instant::now() - start_time).as_secs_f64() as f32
+}
+
+/// Repaint signal for epi frame.
+pub struct Signal;
+impl Default for Signal {
+    fn default() -> Self {
+        Self {}
+    }
+}
+
+impl epi::RepaintSignal for Signal {
+    fn request_repaint(&self) {
+        ()
+    }
 }
 
 /// The scaling factors of the app
@@ -84,6 +113,8 @@ pub struct EguiInputState {
     pub pointer_pos: Pos2,
     pub input: RawInput,
     pub modifiers: Modifiers,
+    /// Internal use case for fn window_resized()
+    pub _window_resized: bool,
 }
 
 impl EguiInputState {
@@ -98,22 +129,25 @@ impl EguiInputState {
                 ..Default::default()
             },
             modifiers: Modifiers::default(),
+            _window_resized: false,
         };
         (painter, _self)
     }
 
+    /// Check if current window being resized.
+    pub fn window_resized(&mut self) -> bool {
+        let tmp = self._window_resized;
+        self._window_resized = false;
+        tmp
+    }
+
     /// Conveniece method bundling the necessary components for input/event handling
-    pub fn fuse_input(
-        &mut self,
-        win: &mut fltk::window::GlutWindow,
-        event: enums::Event,
-        painter: &mut Painter,
-    ) {
+    pub fn fuse_input(&mut self, win: &mut GlWindow, event: enums::Event, painter: &mut Painter) {
         input_to_egui(win, event, self, painter);
     }
 
     /// Convenience method for outputting what egui emits each frame
-    pub fn fuse_output(&mut self, win: &mut GlutWindow, egui_output: &egui::Output) {
+    pub fn fuse_output(&mut self, win: &mut GlWindow, egui_output: &egui::Output) {
         if !egui_output.copied_text.is_empty() {
             app::copy(&egui_output.copied_text);
         }
@@ -123,7 +157,7 @@ impl EguiInputState {
 
 /// Handles input/events from FLTK
 pub fn input_to_egui(
-    win: &mut fltk::window::GlutWindow,
+    win: &mut GlWindow,
     event: enums::Event,
     state: &mut EguiInputState,
     painter: &mut Painter,
@@ -135,6 +169,7 @@ pub fn input_to_egui(
         enums::Event::Resize => {
             painter.update_screen_rect((win.width(), win.height()));
             state.input.screen_rect = Some(painter.screen_rect);
+            state._window_resized = true;
         }
         //MouseButonLeft pressed is the only one needed by egui
         enums::Event::Push => {
@@ -345,7 +380,7 @@ pub fn translate_virtual_key_code(key: enums::Key) -> Option<egui::Key> {
 
 /// Translates FLTK cursor to Egui cursors
 pub fn translate_cursor(
-    win: &mut GlutWindow,
+    win: &mut GlWindow,
     fused: &mut FusedCursor,
     cursor_icon: egui::CursorIcon,
 ) {
@@ -380,47 +415,65 @@ pub trait EguiImageConvertible<I>
 where
     I: ImageExt,
 {
-    fn to_egui_image(self, painter: &mut Painter, new_size: (u32, u32), filtering: bool) -> Result<egui::Image, FltkError>;
+    fn to_egui_image(
+        self,
+        painter: &mut Painter,
+        new_size: (u32, u32),
+        filtering: bool,
+    ) -> Result<(egui::Image, egui::TextureId), FltkError>;
 }
 
 impl<I> EguiImageConvertible<I> for I
 where
     I: ImageExt,
 {
-    fn to_egui_image(self, painter: &mut Painter, new_size: (u32, u32), filtering: bool) -> Result<egui::Image, FltkError> {
+    /// Return (egui::Image, egui::TextureId)
+    fn to_egui_image(
+        self,
+        painter: &mut Painter,
+        new_size: (u32, u32),
+        filtering: bool,
+    ) -> Result<(egui::Image, egui::TextureId), FltkError> {
         let size = (self.data_w() as usize, self.data_h() as usize);
-        let image = egui::Image::new(
-            painter.new_user_texture_rgba8(
-                size,
-                self.to_rgb()?
-                    .convert(enums::ColorDepth::Rgba8)?
-                    .to_rgb_data(),
-                filtering,
-            ),
-            egui::vec2(new_size.0 as _, new_size.1 as _),
+        let texture_id = painter.new_user_texture_rgba8(
+            size,
+            self.to_rgb()?
+                .convert(enums::ColorDepth::Rgba8)?
+                .to_rgb_data(),
+            filtering,
         );
-        Ok(image)
+        let image = egui::Image::new(texture_id, egui::vec2(new_size.0 as _, new_size.1 as _));
+        Ok((image, texture_id))
     }
 }
 
 pub trait EguiSvgConvertible {
-    fn to_egui_image(self, painter: &mut Painter, new_size: (u32, u32), filtering: bool) -> Result<egui::Image, FltkError>;
+    fn to_egui_image(
+        self,
+        painter: &mut Painter,
+        new_size: (u32, u32),
+        filtering: bool,
+    ) -> Result<(egui::Image, egui::TextureId), FltkError>;
 }
 
 impl EguiSvgConvertible for fltk::image::SvgImage {
-    fn to_egui_image(mut self, painter: &mut Painter, new_size: (u32, u32), filtering: bool) -> Result<egui::Image, FltkError> {
+    /// Return (egui::Image, egui::TextureId)
+    fn to_egui_image(
+        mut self,
+        painter: &mut Painter,
+        new_size: (u32, u32),
+        filtering: bool,
+    ) -> Result<(egui::Image, egui::TextureId), FltkError> {
         self.normalize();
         let size = (self.data_w() as usize, self.data_h() as usize);
-        let image = egui::Image::new(
-            painter.new_user_texture_rgba8(
-                size,
-                self.to_rgb()?
-                    .convert(enums::ColorDepth::Rgba8)?
-                    .to_rgb_data(),
-                filtering,
-            ),
-            egui::vec2(new_size.0 as _, new_size.1 as _),
+        let texture_id = painter.new_user_texture_rgba8(
+            size,
+            self.to_rgb()?
+                .convert(enums::ColorDepth::Rgba8)?
+                .to_rgb_data(),
+            filtering,
         );
-        Ok(image)
+        let image = egui::Image::new(texture_id, egui::vec2(new_size.0 as _, new_size.1 as _));
+        Ok((image, texture_id))
     }
 }
