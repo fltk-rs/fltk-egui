@@ -317,22 +317,20 @@ pub fn translate_virtual_key_code(key: enums::Key) -> Option<egui::Key> {
         enums::Key::Up => Some(egui::Key::ArrowUp),
         enums::Key::Right => Some(egui::Key::ArrowRight),
         enums::Key::Down => Some(egui::Key::ArrowDown),
-
         enums::Key::Escape => Some(egui::Key::Escape),
         enums::Key::Tab => Some(egui::Key::Tab),
         enums::Key::BackSpace => Some(egui::Key::Backspace),
-
         enums::Key::Insert => Some(egui::Key::Insert),
         enums::Key::Home => Some(egui::Key::Home),
         enums::Key::Delete => Some(egui::Key::Delete),
         enums::Key::End => Some(egui::Key::End),
         enums::Key::PageDown => Some(egui::Key::PageDown),
         enums::Key::PageUp => Some(egui::Key::PageUp),
+        enums::Key::Enter => Some(egui::Key::Enter),
         _ => {
             if let Some(k) = key.to_char() {
                 match k {
                     ' ' => Some(egui::Key::Space),
-                    '\n' => Some(egui::Key::Enter),
                     'a' => Some(egui::Key::A),
                     'b' => Some(egui::Key::B),
                     'c' => Some(egui::Key::C),
