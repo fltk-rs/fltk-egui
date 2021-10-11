@@ -3,7 +3,6 @@ use egui_backend::{
     fltk::{enums::*, prelude::*, *},
     gl, DpiScaling, EguiImageConvertible,
 };
-use epi::TextureAllocator;
 use fltk_egui as egui_backend;
 use std::rc::Rc;
 use std::{cell::RefCell, time::Instant};

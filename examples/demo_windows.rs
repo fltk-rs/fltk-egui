@@ -149,18 +149,15 @@ fn main() {
             break;
         }
 
-        let window_resized = state.window_resized();
-        if egui_output.needs_repaint || window_resized {
-            if window_resized {
-                win.clear_damage()
-            }
-            state.fuse_output(&mut win, &egui_output);
-            let meshes = egui_ctx.tessellate(shapes);
+        state.fuse_output(&mut win, &egui_output);
+        let meshes = egui_ctx.tessellate(shapes);
 
-            //Draw egui texture
-            painter.paint_jobs(None, meshes, &egui_ctx.texture());
-            win.swap_buffers();
-            win.flush();
+        //Draw egui texture
+        painter.paint_jobs(None, meshes, &egui_ctx.texture());
+        win.swap_buffers();
+        win.flush();
+
+        if egui_output.needs_repaint {
             app::awake()
         }
     }
