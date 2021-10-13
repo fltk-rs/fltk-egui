@@ -17,7 +17,8 @@ const SCREEN_HEIGHT: u32 = 600;
 
 fn main() {
     let a = app::App::default();
-    let mut win = window::GlWindow::new(100, 100, SCREEN_WIDTH as _, SCREEN_HEIGHT as _, None);
+    let mut win = window::GlWindow::new(100, 100, SCREEN_WIDTH as _, SCREEN_HEIGHT as _, None)
+        .center_screen();
     win.set_mode(Mode::Opengl3);
     win.end();
     win.make_resizable(true);
@@ -59,7 +60,7 @@ fn main() {
     let app_output = Rc::new(RefCell::new(AppOutput::default()));
     let egui_ctx = Rc::new(RefCell::new(egui::CtxRef::default()));
 
-    // Redraw while window being resized,
+    // Redraw while window being resized (requires on windows platform),
     // (using win.draw() for correctness, using win.resize_callback() the output looks weird).
     win.draw({
         let state = state.clone();
@@ -149,15 +150,18 @@ fn main() {
             break;
         }
 
-        state.fuse_output(&mut win, &egui_output);
-        let meshes = egui_ctx.tessellate(shapes);
+        let window_resized = state.window_resized();
+        if window_resized {
+            win.clear_damage()
+        }
 
-        //Draw egui texture
-        painter.paint_jobs(None, meshes, &egui_ctx.texture());
-        win.swap_buffers();
-        win.flush();
-
-        if egui_output.needs_repaint {
+        if egui_output.needs_repaint || window_resized {
+            //Draw egui texture
+            state.fuse_output(&mut win, &egui_output);
+            let meshes = egui_ctx.tessellate(shapes);
+            painter.paint_jobs(None, meshes, &egui_ctx.texture());
+            win.swap_buffers();
+            win.flush();
             app::awake()
         }
     }
@@ -165,7 +169,7 @@ fn main() {
 
 fn draw_color() {
     unsafe {
-        // Clear the screen to black
+        // Clear the screen to dark red
         gl::ClearColor(0.6, 0.3, 0.3, 1.0);
         gl::Clear(gl::COLOR_BUFFER_BIT);
     }
