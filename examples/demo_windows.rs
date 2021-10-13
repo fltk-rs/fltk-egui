@@ -24,7 +24,7 @@ fn main() {
     win.make_resizable(true);
     win.show();
     win.make_current();
-    let (painter, egui_input_state) = egui_backend::with_fltk(&mut win, DpiScaling::Custom(1.));
+    let (painter, egui_input_state) = egui_backend::with_fltk(&mut win, DpiScaling::Custom(1.25));
     let state = Rc::new(RefCell::new(egui_input_state));
     let painter = Rc::new(RefCell::new(painter));
 
