@@ -462,8 +462,8 @@ impl Painter {
     }
 
     /// Frees the user texture,
-    /// 
-    /// fn free_user_texture() and fn free() implemented from epi both are basically the same. 
+    ///
+    /// fn free_user_texture() and fn free() implemented from epi both are basically the same.
     pub fn free_user_texture(&mut self, id: egui::TextureId) {
         if let egui::TextureId::User(id) = id {
             let idx = id as usize;
@@ -566,7 +566,6 @@ impl Painter {
             let indices: Vec<u16> = mesh.indices.iter().map(move |idx| *idx as u16).collect();
             let indices_len = indices.len();
             let vertices = &mesh.vertices;
-            let vertices_len = vertices.len();
 
             // --------------------------------------------------------------------
 
@@ -582,10 +581,10 @@ impl Painter {
 
             // --------------------------------------------------------------------
 
-            let mut positions: Vec<f32> = Vec::with_capacity(2 * vertices_len);
-            let mut tex_coords: Vec<f32> = Vec::with_capacity(2 * vertices_len);
+            let mut positions: Vec<f32> = Vec::with_capacity(2 * indices_len);
+            let mut tex_coords: Vec<f32> = Vec::with_capacity(2 * indices_len);
             {
-                for v in &mesh.vertices {
+                for v in vertices {
                     positions.push(v.pos.x);
                     positions.push(v.pos.y);
                     tex_coords.push(v.uv.x);
@@ -637,7 +636,7 @@ impl Painter {
 
             // --------------------------------------------------------------------
 
-            let mut colors: Vec<u8> = Vec::with_capacity(4 * vertices_len);
+            let mut colors: Vec<u8> = Vec::with_capacity(4 * indices_len);
             {
                 for v in vertices {
                     colors.push(v.color[0]);

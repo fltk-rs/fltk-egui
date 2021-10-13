@@ -39,8 +39,7 @@ fn main() {
     main_win.show();
     gl_win.make_current();
 
-    let (painter, egui_input_state) =
-        egui_backend::with_fltk(&mut gl_win, DpiScaling::Custom(1.5));
+    let (painter, egui_input_state) = egui_backend::with_fltk(&mut gl_win, DpiScaling::Custom(1.5));
     let mut egui_ctx = egui::CtxRef::default();
 
     let state = Rc::from(RefCell::from(egui_input_state));
