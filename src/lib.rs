@@ -29,7 +29,6 @@
 
 use std::time::Instant;
 
-use chrono::Timelike;
 // Re-export dependencies.
 pub use egui;
 use egui::{pos2, CursorIcon, Event, Key, Modifiers, Pos2, RawInput};
@@ -54,11 +53,6 @@ pub fn with_fltk(win: &mut GlWindow, scale: DpiScaling) -> (Painter, EguiInputSt
     let painter = Painter::new(win, scale);
     EguiInputState::new(painter)
 }
-/// Time of day as seconds since midnight. Used for clock in demo app.
-pub fn get_seconds_since_midnight() -> f64 {
-    let time = chrono::Local::now().time();
-    time.num_seconds_from_midnight() as f64 + 1e-9 * (time.nanosecond() as f64)
-}
 
 /// Frame time for FPS.
 pub fn get_frame_time(start_time: Instant) -> f32 {
@@ -74,9 +68,7 @@ impl Default for Signal {
 }
 
 impl epi::RepaintSignal for Signal {
-    fn request_repaint(&self) {
-        ()
-    }
+    fn request_repaint(&self) {}
 }
 
 /// The scaling factors of the app

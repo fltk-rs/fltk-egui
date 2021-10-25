@@ -5,7 +5,7 @@ use egui_backend::{
         App, IntegrationInfo,
     },
     fltk::{enums::*, prelude::*, *},
-    get_frame_time, get_seconds_since_midnight, gl, DpiScaling, Signal,
+    get_frame_time, gl, DpiScaling, Signal,
 };
 
 use fltk_egui as egui_backend;
@@ -60,62 +60,6 @@ fn main() {
     let app_output = Rc::new(RefCell::new(AppOutput::default()));
     let egui_ctx = Rc::new(RefCell::new(egui::CtxRef::default()));
 
-    // Redraw while window being resized (requires on windows platform),
-    // (using win.draw() for correctness, using win.resize_callback() the output looks weird).
-    win.draw({
-        let state = state.clone();
-        let painter = painter.clone();
-        let demo_windows = demo_windows.clone();
-        let app_output = app_output.clone();
-        let egui_ctx = egui_ctx.clone();
-        let repaint_signal = repaint_signal.clone();
-        move |win| {
-            // And here also using "if let ..." for safety.
-            if let Ok(mut state) = state.try_borrow_mut() {
-                if state.window_resized() {
-                    if let Ok(mut painter) = painter.try_borrow_mut() {
-                        win.clear_damage();
-                        let mut demo_windows = demo_windows.borrow_mut();
-                        let mut app_output = app_output.borrow_mut();
-                        let mut egui_ctx = egui_ctx.borrow_mut();
-                        state.input.time = Some(start_time.elapsed().as_secs_f64());
-                        egui_ctx.begin_frame(state.input.take());
-
-                        // Draw background color.
-                        draw_color();
-
-                        let mut frame = FrameBuilder {
-                            info: IntegrationInfo {
-                                web_info: None,
-                                cpu_usage: Some(get_frame_time(start_time)),
-                                seconds_since_midnight: Some(get_seconds_since_midnight()),
-                                native_pixels_per_point: Some(painter.pixels_per_point),
-                                prefer_dark_mode: None,
-                            },
-                            tex_allocator: &mut *painter,
-                            output: &mut app_output,
-                            repaint_signal: repaint_signal.clone(),
-                        }
-                        .build();
-
-                        demo_windows.update(&egui_ctx, &mut frame);
-
-                        let (egui_output, shapes) = egui_ctx.end_frame();
-                        state.fuse_output(win, &egui_output);
-
-                        let meshes = egui_ctx.tessellate(shapes);
-
-                        //Draw egui texture
-                        painter.paint_jobs(None, meshes, &egui_ctx.texture());
-                        win.swap_buffers();
-                        win.flush();
-                        app::awake()
-                    }
-                }
-            }
-        }
-    });
-
     while a.wait() {
         let mut state = state.borrow_mut();
         let mut painter = painter.borrow_mut();
@@ -130,9 +74,9 @@ fn main() {
 
         let mut frame = FrameBuilder {
             info: IntegrationInfo {
+                name: "demo windows",
                 web_info: None,
                 cpu_usage: Some(get_frame_time(start_time)),
-                seconds_since_midnight: Some(get_seconds_since_midnight()),
                 native_pixels_per_point: Some(painter.pixels_per_point),
                 prefer_dark_mode: None,
             },
