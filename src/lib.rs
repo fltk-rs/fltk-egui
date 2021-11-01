@@ -36,7 +36,7 @@ pub use epi;
 pub use fltk;
 use fltk::{
     app, enums,
-    prelude::{FltkError, ImageExt, InputExt, WidgetExt, WindowExt},
+    prelude::{FltkError, GroupExt, ImageExt, InputExt, WidgetExt, WindowExt},
     window::GlWindow,
 };
 pub use gl;
@@ -50,7 +50,9 @@ pub fn with_fltk(win: &mut GlWindow, scale: DpiScaling) -> (Painter, EguiInputSt
         DpiScaling::Default => win.pixels_per_unit(),
         DpiScaling::Custom(custom) => custom,
     };
+    let inp = fltk::input::Input::default();
     let painter = Painter::new(win, scale);
+    win.add(&inp);
     EguiInputState::new(painter)
 }
 
@@ -154,7 +156,6 @@ pub fn input_to_egui(
     state: &mut EguiInputState,
     painter: &mut Painter,
 ) {
-    let inp = fltk::input::Input::default();
     let (x, y) = app::event_coords();
     let pixels_per_point = painter.pixels_per_point;
     match event {
@@ -221,6 +222,7 @@ pub fn input_to_egui(
                     command: (keymod & enums::EventState::Command == enums::EventState::Command),
                 };
                 if state.modifiers.command && key == Key::V {
+                    let inp: fltk::input::Input = unsafe { win.child(0).unwrap().into_widget() };
                     app::paste(&inp);
                     state.input.events.push(Event::Text(inp.value()));
                 }
