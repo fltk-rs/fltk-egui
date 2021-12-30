@@ -57,32 +57,31 @@ fn main() {
         let mut state = state.borrow_mut();
         let mut painter = painter.borrow_mut();
         state.input.time = Some(start_time.elapsed().as_secs_f64());
-        egui_ctx.begin_frame(state.input.take());
-
-        unsafe {
-            // Clear the screen to black
-            gl::ClearColor(0.6, 0.3, 0.3, 1.0);
-            gl::Clear(gl::COLOR_BUFFER_BIT);
-        }
-        egui::CentralPanel::default().show(&egui_ctx, |ui| {
-            ui.heading("My egui Application");
-            ui.add(image);
-            if ui
-                .button("Quit?")
-                .on_hover_cursor(egui::CursorIcon::PointingHand)
-                .clicked()
-            {
-                quit = true;
+        let (egui_output, shapes) = egui_ctx.run(state.input.take(), |ctx| {
+            unsafe {
+                // Clear the screen to black
+                gl::ClearColor(0.6, 0.3, 0.3, 1.0);
+                gl::Clear(gl::COLOR_BUFFER_BIT);
             }
+            egui::CentralPanel::default().show(&ctx, |ui| {
+                ui.heading("My egui Application");
+                ui.add(image);
+                if ui
+                    .button("Quit?")
+                    .on_hover_cursor(egui::CursorIcon::PointingHand)
+                    .clicked()
+                {
+                    quit = true;
+                }
+            });
         });
 
-        let (egui_output, shapes) = egui_ctx.end_frame();
         state.fuse_output(&mut win, &egui_output);
 
         let meshes = egui_ctx.tessellate(shapes);
 
         //Draw egui texture
-        painter.paint_jobs(None, meshes, &egui_ctx.texture());
+        painter.paint_jobs(None, meshes, &egui_ctx.font_image());
 
         win.swap_buffers();
         win.flush();

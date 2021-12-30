@@ -31,7 +31,7 @@ use std::time::Instant;
 
 // Re-export dependencies.
 pub use egui;
-use egui::{pos2, CursorIcon, Event, Key, Modifiers, Pos2, RawInput};
+use egui::{pos2, CursorIcon, Event, Key, Modifiers, Pos2, RawInput, Vec2};
 pub use epi;
 pub use fltk;
 use fltk::{
@@ -69,7 +69,7 @@ impl Default for Signal {
     }
 }
 
-impl epi::RepaintSignal for Signal {
+impl epi::backend::RepaintSignal for Signal {
     fn request_repaint(&self) {}
 }
 
@@ -277,10 +277,10 @@ pub fn input_to_egui(
                 let zoom_factor = 1.2;
                 match app::event_dy() {
                     app::MouseWheel::Up => {
-                        state.input.zoom_delta /= zoom_factor;
+                        state.input.events.push(Event::Zoom(zoom_factor * -1.0));
                     }
                     app::MouseWheel::Down => {
-                        state.input.zoom_delta *= zoom_factor;
+                        state.input.events.push(Event::Zoom(zoom_factor));
                     }
                     _ => (),
                 }
@@ -288,10 +288,16 @@ pub fn input_to_egui(
                 let scroll_factor = 15.0;
                 match app::event_dy() {
                     app::MouseWheel::Up => {
-                        state.input.scroll_delta.y -= scroll_factor;
+                        state.input.events.push(Event::Scroll(Vec2 {
+                            x: scroll_factor,
+                            y: 0.,
+                        }));
                     }
                     app::MouseWheel::Down => {
-                        state.input.scroll_delta.y += scroll_factor;
+                        state.input.events.push(Event::Scroll(Vec2 {
+                            x: 0.,
+                            y: scroll_factor,
+                        }));
                     }
                     _ => (),
                 }

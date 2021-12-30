@@ -75,44 +75,43 @@ fn main() {
         let mut state = state.borrow_mut();
         let mut painter = painter.borrow_mut();
         state.input.time = Some(start_time.elapsed().as_secs_f64());
-        egui_ctx.begin_frame(state.input.take());
         frm.set_label(&format!("Hello {}", &name));
         slider.set_value(age as f64 / 120.);
+        let (egui_output, shapes) = egui_ctx.run(state.input.take(), |ctx| {
+            unsafe {
+                // Clear the screen to black
+                gl::ClearColor(0.6, 0.3, 0.3, 1.0);
+                gl::Clear(gl::COLOR_BUFFER_BIT);
+            }
 
-        unsafe {
-            // Clear the screen to black
-            gl::ClearColor(0.6, 0.3, 0.3, 1.0);
-            gl::Clear(gl::COLOR_BUFFER_BIT);
-        }
-
-        egui::CentralPanel::default().show(&egui_ctx, |ui| {
-            ui.heading("My egui Application");
-            ui.horizontal(|ui| {
-                ui.label("Your name: ");
-                ui.text_edit_singleline(&mut name);
+            egui::CentralPanel::default().show(&ctx, |ui| {
+                ui.heading("My egui Application");
+                ui.horizontal(|ui| {
+                    ui.label("Your name: ");
+                    ui.text_edit_singleline(&mut name);
+                });
+                ui.add(egui::Slider::new(&mut age, 0..=120).text("age"));
+                if ui.button("Click each year").clicked() {
+                    age += 1;
+                }
+                ui.label(format!("Hello '{}', age {}", name, age));
+                ui.separator();
+                if ui
+                    .button("Quit?")
+                    .on_hover_cursor(egui::CursorIcon::PointingHand)
+                    .clicked()
+                {
+                    quit = true;
+                }
             });
-            ui.add(egui::Slider::new(&mut age, 0..=120).text("age"));
-            if ui.button("Click each year").clicked() {
-                age += 1;
-            }
-            ui.label(format!("Hello '{}', age {}", name, age));
-            ui.separator();
-            if ui
-                .button("Quit?")
-                .on_hover_cursor(egui::CursorIcon::PointingHand)
-                .clicked()
-            {
-                quit = true;
-            }
         });
 
-        let (egui_output, shapes) = egui_ctx.end_frame();
         state.fuse_output(&mut gl_win, &egui_output);
 
         let meshes = egui_ctx.tessellate(shapes);
 
         //Draw egui texture
-        painter.paint_jobs(None, meshes, &egui_ctx.texture());
+        painter.paint_jobs(None, meshes, &egui_ctx.font_image());
 
         gl_win.swap_buffers();
         gl_win.flush();

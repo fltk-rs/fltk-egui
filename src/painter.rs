@@ -12,7 +12,7 @@ use std::ffi::CString;
 use std::os::raw::c_void;
 
 use egui::{
-    paint::{Color32, Mesh, Texture},
+    epaint::{Color32, FontImage, Mesh},
     vec2, ClippedMesh, Pos2, Rect,
 };
 
@@ -301,7 +301,7 @@ impl Painter {
         id
     }
 
-    fn upload_egui_texture(&mut self, texture: &Texture) {
+    fn upload_egui_texture(&mut self, texture: &FontImage) {
         if self.egui_texture_version == Some(texture.version) {
             return; // No change
         }
@@ -485,7 +485,7 @@ impl Painter {
         &mut self,
         bg_color: Option<Color32>,
         meshes: Vec<ClippedMesh>,
-        egui_texture: &Texture,
+        egui_texture: &FontImage,
     ) {
         self.upload_egui_texture(egui_texture);
         self.upload_user_textures();
@@ -707,19 +707,18 @@ impl Painter {
     }
 }
 
-impl epi::TextureAllocator for Painter {
-    fn alloc_srgba_premultiplied(
-        &mut self,
-        size: (usize, usize),
-        srgba_pixels: &[egui::Color32],
-    ) -> egui::TextureId {
-        self.new_user_texture(size, srgba_pixels, true)
-    }
+// impl epi::TextureAllocator for Painter {
+//     fn alloc(
+//         &self,
+//         image: epi::Image
+//     ) -> egui::TextureId {
+//         self.new_user_texture((image.size[0], image.size[1]), &image.pixels, true)
+//     }
 
-    fn free(&mut self, id: egui::TextureId) {
-        self.free_user_texture(id)
-    }
-}
+//     fn free(&self, id: egui::TextureId) {
+//         self.free_user_texture(id)
+//     }
+// }
 
 impl Drop for Painter {
     fn drop(&mut self) {

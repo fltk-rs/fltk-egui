@@ -1,7 +1,7 @@
 [package]
 name = "fltk-egui"
-version = "0.4.0"
-edition = "2018"
+version = "0.5.0"
+edition = "2021"
 authors = ["MoAlyousef <mohammed.alyousef@neurosrg.com>"]
 description = "FLTK backend for egui"
 repository = "https://github.com/fltk-rs/fltk-egui"
@@ -12,8 +12,8 @@ readme = "README.md"
 license = "MIT"
 
 [dependencies]
-egui = "0.15"
-epi = "0.15"
+egui = "0.16"
+epi = "0.16"
 # for internal use case faster build (bundled).
 # fltk = { version = "1.2", features = ["enable-glwindow", "fltk-bundled"] }
 fltk = { version = "1.2", features = ["enable-glwindow"] }
@@ -21,7 +21,7 @@ gl = "0.14"
 
 # for the demo_windows example
 [dev-dependencies]
-egui_demo_lib = "0.15"
+egui_demo_lib = "0.16"
 
 [features]
 fltk-bundled = ["fltk/fltk-bundled"]

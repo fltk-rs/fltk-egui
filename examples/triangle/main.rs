@@ -84,58 +84,57 @@ fn main() {
         let mut state = state.borrow_mut();
         let mut painter = painter.borrow_mut();
         state.input.time = Some(start_time.elapsed().as_secs_f64());
-        egui_ctx.begin_frame(state.input.take());
+        let (egui_output, paint_cmds) = egui_ctx.run(state.input.take(), |ctx| {
+            //An example of how OpenGL can be used to draw custom stuff with egui
+            //overlaying it:
+            //First clear the background to something nice.
+            unsafe {
+                // Clear the screen to black
+                gl::ClearColor(0.3, 0.6, 0.3, 1.0);
+                gl::Clear(gl::COLOR_BUFFER_BIT);
+            }
 
-        //An example of how OpenGL can be used to draw custom stuff with egui
-        //overlaying it:
-        //First clear the background to something nice.
-        unsafe {
-            // Clear the screen to black
-            gl::ClearColor(0.3, 0.6, 0.3, 1.0);
-            gl::Clear(gl::COLOR_BUFFER_BIT);
-        }
+            //Then draw our triangle.
+            triangle.draw();
 
-        //Then draw our triangle.
-        triangle.draw();
-
-        let mut srgba: Vec<Color32> = Vec::new();
-        let mut angle = 0f32;
-        //Draw a cool sine wave in a buffer.
-        for y in 0..PIC_HEIGHT {
-            for x in 0..PIC_WIDTH {
-                srgba.push(Color32::BLACK);
-                if y == PIC_HEIGHT - 1 {
-                    let y = amplitude * (angle * std::f32::consts::PI / 180f32 + sine_shift).sin();
-                    let y = PIC_HEIGHT as f32 / 2f32 - y;
-                    srgba[(y as i32 * PIC_WIDTH + x) as usize] = Color32::YELLOW;
-                    angle += 360f32 / PIC_WIDTH as f32;
+            let mut srgba: Vec<Color32> = Vec::new();
+            let mut angle = 0f32;
+            //Draw a cool sine wave in a buffer.
+            for y in 0..PIC_HEIGHT {
+                for x in 0..PIC_WIDTH {
+                    srgba.push(Color32::BLACK);
+                    if y == PIC_HEIGHT - 1 {
+                        let y = amplitude * (angle * std::f32::consts::PI / 180f32 + sine_shift).sin();
+                        let y = PIC_HEIGHT as f32 / 2f32 - y;
+                        srgba[(y as i32 * PIC_WIDTH + x) as usize] = Color32::YELLOW;
+                        angle += 360f32 / PIC_WIDTH as f32;
+                    }
                 }
             }
-        }
-        sine_shift += 0.1f32;
+            sine_shift += 0.1f32;
 
-        //This updates the previously initialized texture with new data.
-        //If we weren't updating the texture, this call wouldn't be required.
-        painter.update_user_texture_data(chip8_tex_id, &srgba);
+            //This updates the previously initialized texture with new data.
+            //If we weren't updating the texture, this call wouldn't be required.
+            painter.update_user_texture_data(chip8_tex_id, &srgba);
 
-        egui::Window::new("Egui with FLTK and GL").show(&egui_ctx, |ui| {
-            //Image just needs a texture id reference, so we just pass it the texture id that was returned to us
-            //when we previously initialized the texture.
-            ui.add(Image::new(chip8_tex_id, vec2(PIC_WIDTH as f32, PIC_HEIGHT as f32)));
-            ui.separator();
-            ui.label("A simple sine wave plotted onto a GL texture then blitted to an egui managed Image.");
-            ui.label(" ");
-            ui.text_edit_multiline(&mut test_str);
-            ui.label(" ");
+            egui::Window::new("Egui with FLTK and GL").show(&ctx, |ui| {
+                //Image just needs a texture id reference, so we just pass it the texture id that was returned to us
+                //when we previously initialized the texture.
+                ui.add(Image::new(chip8_tex_id, vec2(PIC_WIDTH as f32, PIC_HEIGHT as f32)));
+                ui.separator();
+                ui.label("A simple sine wave plotted onto a GL texture then blitted to an egui managed Image.");
+                ui.label(" ");
+                ui.text_edit_multiline(&mut test_str);
+                ui.label(" ");
 
-            ui.add(egui::Slider::new(&mut amplitude, 0.0..=50.0).text("Amplitude"));
-            ui.label(" ");
-            if ui.button("Quit").on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
-                quit = true;
-            }
+                ui.add(egui::Slider::new(&mut amplitude, 0.0..=50.0).text("Amplitude"));
+                ui.label(" ");
+                if ui.button("Quit").on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
+                    quit = true;
+                }
+            });
         });
 
-        let (egui_output, paint_cmds) = egui_ctx.end_frame();
         state.fuse_output(&mut win, &egui_output);
 
         let paint_jobs = egui_ctx.tessellate(paint_cmds);
@@ -144,7 +143,7 @@ fn main() {
         //Use this only if egui is being used for all drawing and you aren't mixing your own Open GL
         //drawing calls with it.
         //Since we are custom drawing an OpenGL Triangle we don't need egui to clear the background.
-        painter.paint_jobs(None, paint_jobs, &egui_ctx.texture());
+        painter.paint_jobs(None, paint_jobs, &egui_ctx.font_image());
 
         win.swap_buffers();
         win.flush();
