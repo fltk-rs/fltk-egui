@@ -32,7 +32,6 @@ use std::time::Instant;
 // Re-export dependencies.
 pub use egui;
 use egui::{pos2, CursorIcon, Event, Key, Modifiers, Pos2, RawInput, Vec2};
-pub use epi;
 pub use fltk;
 use fltk::{
     app, enums,
@@ -59,18 +58,6 @@ pub fn with_fltk(win: &mut GlWindow, scale: DpiScaling) -> (Painter, EguiInputSt
 /// Frame time for FPS.
 pub fn get_frame_time(start_time: Instant) -> f32 {
     (Instant::now() - start_time).as_secs_f64() as f32
-}
-
-/// Repaint signal for epi frame.
-pub struct Signal;
-impl Default for Signal {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
-impl epi::backend::RepaintSignal for Signal {
-    fn request_repaint(&self) {}
 }
 
 /// The scaling factors of the app

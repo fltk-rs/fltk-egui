@@ -1,16 +1,12 @@
 use egui_backend::{
     egui,
-    epi::{
-        backend::{AppOutput, FrameData},
-        App, Frame, IntegrationInfo,
-    },
     fltk::{enums::*, prelude::*, *},
-    get_frame_time, gl, DpiScaling, Signal,
+    gl, DpiScaling,
 };
 
 use fltk_egui as egui_backend;
+use std::rc::Rc;
 use std::{cell::RefCell, time::Instant};
-use std::{rc::Rc, sync::Arc};
 
 const SCREEN_WIDTH: u32 = 800;
 const SCREEN_HEIGHT: u32 = 600;
@@ -55,8 +51,7 @@ fn main() {
     });
 
     let start_time = Instant::now();
-    let repaint_signal = Arc::new(Signal::default());
-    let mut demo_windows = egui_demo_lib::WrapApp::default();
+    let mut demo_windows = egui_demo_lib::DemoWindows::default();
     let mut egui_ctx = egui::CtxRef::default();
 
     while a.wait() {
@@ -67,21 +62,7 @@ fn main() {
             // Draw background color.
             draw_color();
 
-            let frame = FrameData {
-                info: IntegrationInfo {
-                    name: "demo windows",
-                    web_info: None,
-                    cpu_usage: Some(get_frame_time(start_time)),
-                    native_pixels_per_point: Some(painter.pixels_per_point),
-                    prefer_dark_mode: None,
-                },
-                output: AppOutput::default(),
-                repaint_signal: repaint_signal.clone(),
-            };
-
-            let mut frame = Frame::new(frame);
-
-            demo_windows.update(&ctx, &mut frame);
+            demo_windows.ui(&ctx);
         });
 
         let window_resized = state.window_resized();

@@ -707,19 +707,6 @@ impl Painter {
     }
 }
 
-// impl epi::TextureAllocator for Painter {
-//     fn alloc(
-//         &self,
-//         image: epi::Image
-//     ) -> egui::TextureId {
-//         self.new_user_texture((image.size[0], image.size[1]), &image.pixels, true)
-//     }
-
-//     fn free(&self, id: egui::TextureId) {
-//         self.free_user_texture(id)
-//     }
-// }
-
 impl Drop for Painter {
     fn drop(&mut self) {
         self.cleanup()
