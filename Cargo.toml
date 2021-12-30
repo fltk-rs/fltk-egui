@@ -14,10 +14,10 @@ rust-version = "1.56"
 
 [dependencies]
 egui = "0.16"
+gl = "0.14"
 # for internal use case faster build (bundled).
 # fltk = { version = "1.2", features = ["enable-glwindow", "fltk-bundled"] }
 fltk = { version = "1.2", features = ["enable-glwindow"] }
-gl = "0.14"
 
 # for the demo_windows example
 [dev-dependencies]

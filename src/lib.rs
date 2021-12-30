@@ -7,7 +7,7 @@
     Add to your Cargo.toml:
     ```toml
     [dependencies]
-    fltk-egui = "0.3"
+    fltk-egui = "0.5" # targets egui 0.16
     ```
 
     The basic premise is that egui is an immediate mode gui, while FLTK is retained.

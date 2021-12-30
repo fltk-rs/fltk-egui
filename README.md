@@ -6,7 +6,7 @@ An FLTK backend for Egui using a GlWindow. The code is largely based on https://
 Add to your Cargo.toml:
 ```toml
 [dependencies]
-fltk-egui = "0.3"
+fltk-egui = "0.5" # targets egui 0.16
 ```
 
 The basic premise is that egui is an immediate mode gui, while FLTK is retained. To be able to run Egui code, events and redrawing would need to be handled/done in the FLTK event loop. The events are those of the GlWindow, which are sent to egui's event handlers. Other FLTK widgets can function also normally since there is no interference from Egui.
@@ -26,8 +26,3 @@ https://github.com/fltk-rs/demos/tree/master/egui-demo
 
 - [embedded](examples/embedded.rs)
 - ![alt_test](screenshots/egui.jpg)
-
-## Todo
-- Properly handle resizing the GlWindow: ✅
-- Support egui_demo_lib crate directly: ✅
-- Clipboard support: ✅
