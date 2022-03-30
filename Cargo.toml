@@ -13,7 +13,7 @@ license = "MIT"
 rust-version = "1.56"
 
 [dependencies]
-epi = "0.17"
+egui = "0.17"
 egui_glow = { version = "0.17", default-features = false, features = [
     "default_fonts",
 ] }
@@ -41,6 +41,6 @@ default-features = false
 [features]
 default = ["x11"]
 x11 = ["copypasta/x11"]
-wayland = ["copypasta/wayland", "fltk/use-wayland"]
+wayland = ["x11", "copypasta/wayland", "fltk/use-wayland"]
 fltk-bundled = ["fltk/fltk-bundled"]
 no-pango = ["fltk/no-pango"]

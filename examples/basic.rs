@@ -1,5 +1,5 @@
 use egui_backend::{
-    epi::egui::{self},
+    egui::{self},
     fltk::{prelude::*, *},
     glow,
 };
@@ -39,9 +39,13 @@ fn main() {
             | enums::Event::Resize
             | enums::Event::Move
             | enums::Event::Drag => {
-                let mut state = state.borrow_mut();
-                state.fuse_input(win, ev);
-                true
+                // Using "if let ..." for safety.
+                if let Ok(mut state) = state.try_borrow_mut() {
+                    state.fuse_input(win, ev);
+                    true
+                } else {
+                    false
+                }
             }
             _ => false,
         }

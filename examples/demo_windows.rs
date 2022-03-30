@@ -1,5 +1,5 @@
 use egui_backend::{
-    epi::egui,
+    egui,
     fltk::{enums::*, prelude::*, *}, glow,
 };
 
@@ -39,13 +39,13 @@ fn main() {
             | enums::Event::Resize
             | enums::Event::Move
             | enums::Event::Drag => {
-                let mut handled = false;
                 // Using "if let ..." for safety.
                 if let Ok(mut state) = state.try_borrow_mut() {
                     state.fuse_input(win, ev);
-                    handled = true;
+                    true
+                } else {
+                    false
                 }
-                handled
             }
             _ => false,
         }
@@ -65,7 +65,7 @@ fn main() {
 
         let window_resized = state.window_resized();
         if window_resized {
-            win.clear_damage()
+            win.clear_damage();
         }
 
         if egui_output.needs_repaint || window_resized {
@@ -81,7 +81,7 @@ fn main() {
             );
             win.swap_buffers();
             win.flush();
-            app::awake()
+            app::awake();
         }
     }
 }
