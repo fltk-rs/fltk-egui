@@ -1,33 +1,35 @@
 use egui_backend::{
-    egui,
-    fltk::{enums::*, prelude::*, *},
-    gl, DpiScaling,
+    epi::egui::{self},
+    fltk::{prelude::*, *},
+    glow,
 };
+use fltk::enums::Mode;
 use fltk_egui as egui_backend;
 use std::rc::Rc;
 use std::{cell::RefCell, time::Instant};
-
 const SCREEN_WIDTH: u32 = 800;
 const SCREEN_HEIGHT: u32 = 600;
 
 fn main() {
-    let a = app::App::default();
-    let mut win = window::GlWindow::new(100, 100, SCREEN_WIDTH as _, SCREEN_HEIGHT as _, None);
+    let fltk_app = app::App::default();
+    let mut win = window::GlWindow::new(100, 100, SCREEN_WIDTH as _, SCREEN_HEIGHT as _, None)
+        .center_screen();
     win.set_mode(Mode::Opengl3);
     win.end();
     win.make_resizable(true);
     win.show();
     win.make_current();
 
-    let (painter, egui_input_state) = egui_backend::with_fltk(&mut win, DpiScaling::Custom(1.5));
-    let mut egui_ctx = egui::CtxRef::default();
+    //Init backend
+    let (gl, mut painter, egui_state) = egui_backend::with_fltk(&mut win);
 
-    let state = Rc::from(RefCell::from(egui_input_state));
-    let painter = Rc::from(RefCell::from(painter));
+    //Init egui ctx
+    let egui_ctx = egui::Context::default();
+
+    let state = Rc::from(RefCell::from(egui_state));
 
     win.handle({
         let state = state.clone();
-        let painter = painter.clone();
         move |win, ev| match ev {
             enums::Event::Push
             | enums::Event::Released
@@ -38,7 +40,7 @@ fn main() {
             | enums::Event::Move
             | enums::Event::Drag => {
                 let mut state = state.borrow_mut();
-                state.fuse_input(win, ev, &mut painter.borrow_mut());
+                state.fuse_input(win, ev);
                 true
             }
             _ => false,
@@ -46,20 +48,18 @@ fn main() {
     });
 
     let start_time = Instant::now();
-    let mut name = String::new();
-    let mut age = 0;
-    let mut quit = false;
 
-    while a.wait() {
+    let mut quit = false;
+    let mut age: i32 = 17;
+    let mut name: String = "".to_string();
+
+    while fltk_app.wait() {
+        // Clear the screen to dark red
+        draw_background(&gl);
+
         let mut state = state.borrow_mut();
-        let mut painter = painter.borrow_mut();
         state.input.time = Some(start_time.elapsed().as_secs_f64());
-        let (egui_output, shapes) = egui_ctx.run(state.input.take(), |ctx| {
-            unsafe {
-                // Clear the screen to black
-                gl::ClearColor(0.6, 0.3, 0.3, 1.0);
-                gl::Clear(gl::COLOR_BUFFER_BIT);
-            }
+        let egui_output = egui_ctx.run(state.input.take(), |ctx| {
             egui::CentralPanel::default().show(&ctx, |ui| {
                 ui.heading("My egui Application");
                 ui.horizontal(|ui| {
@@ -82,20 +82,31 @@ fn main() {
             });
         });
 
-        state.fuse_output(&mut win, &egui_output);
-
-        let meshes = egui_ctx.tessellate(shapes);
+        state.fuse_output(&mut win, egui_output.platform_output);
 
         //Draw egui texture
-        painter.paint_jobs(None, meshes, &egui_ctx.font_image());
-
+        let meshes = egui_ctx.tessellate(egui_output.shapes);
+        painter.paint_and_update_textures(
+            &gl,
+            state.canvas_size,
+            state.pixels_per_point,
+            meshes,
+            &egui_output.textures_delta,
+        );
         win.swap_buffers();
         win.flush();
 
-        if egui_output.needs_repaint {
-            app::awake()
+        if egui_output.needs_repaint || state.window_resized() {
+            app::awake();
         } else if quit {
             break;
         }
+    }
+}
+
+fn draw_background<GL: glow::HasContext>(gl: &GL) {
+    unsafe {
+        gl.clear_color(0.6, 0.3, 0.3, 1.0);
+        gl.clear(glow::COLOR_BUFFER_BIT);
     }
 }
