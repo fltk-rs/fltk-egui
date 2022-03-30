@@ -30,15 +30,12 @@ egui_demo_lib = "0.17"
 # clipboard dep
 [target."cfg(windows)".dependencies.copypasta]
 version = "0.7"
-optional = true
 
 [target."cfg(all(unix, not(any(target_os=\"linux\", target_os=\"freebsd\"))))".dependencies.copypasta]
 version = "0.7"
-optional = true
 
 [target."cfg(all(unix, any(target_os=\"linux\", target_os=\"freebsd\")))".dependencies.copypasta]
 version = "0.7"
-optional = true
 default-features = false
 
 [features]

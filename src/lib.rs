@@ -40,7 +40,7 @@ use epi::egui;
 pub use fltk;
 use fltk::{
     app, enums,
-    prelude::{FltkError, GroupExt, ImageExt, WidgetExt, WindowExt},
+    prelude::{FltkError, ImageExt, WidgetExt, WindowExt},
     window::GlWindow,
 };
 use glow::HasContext;
@@ -60,10 +60,8 @@ pub fn with_fltk(win: &mut GlWindow) -> (glow::Context, Painter, EguiState) {
         gl.enable(glow::MULTISAMPLE)
     };
 
-    let inp = fltk::input::Input::default();
     let painter = Painter::new(&gl, None, "")
         .unwrap_or_else(|error| panic!("some OpenGL error occurred {}\n", error));
-    win.add(&inp);
     (gl, painter, EguiState::new(&win))
 }
 
