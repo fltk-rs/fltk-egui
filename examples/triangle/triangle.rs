@@ -69,7 +69,6 @@ pub fn link_program(gl: &glow::Context, vs: Shader, fs: Shader) -> Program {
 
 impl Triangle {
     pub fn new(gl: &glow::Context) -> Self {
-        unsafe { gl.enable(glow::MULTISAMPLE) };
         let vs = compile_shader(gl, VS_SRC, glow::VERTEX_SHADER);
         let fs = compile_shader(gl, FS_SRC, glow::FRAGMENT_SHADER);
         let program = link_program(gl, vs, fs);
