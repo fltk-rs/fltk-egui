@@ -7,7 +7,13 @@
     Add to your Cargo.toml:
     ```toml
     [dependencies]
-    fltk-egui = "0.5" # targets egui 0.16
+    fltk-egui = "0.6" # targets egui 0.17
+    ```
+
+    On wayland desktop enable feature:
+    ```toml
+    [dependencies]
+    fltk-egui = { version = "0.6",  features = ["wayland"] }
     ```
 
     The basic premise is that egui is an immediate mode gui, while FLTK is retained.
@@ -30,13 +36,12 @@
 use std::time::Instant;
 
 // Re-export dependencies.
+pub use egui;
 use egui::{pos2, vec2, CursorIcon, Event, Key, Modifiers, Pos2, RawInput, Rect, Vec2};
 pub use egui_extras;
 use egui_extras::RetainedImage;
 use egui_glow::Painter;
 pub use egui_glow::{glow, painter};
-pub use epi;
-use epi::egui;
 pub use fltk;
 use fltk::{
     app, enums,
@@ -151,7 +156,7 @@ impl EguiState {
     }
 
     /// Convenience method for outputting what egui emits each frame
-    pub fn fuse_output(&mut self, win: &mut GlWindow, egui_output: epi::egui::PlatformOutput) {
+    pub fn fuse_output(&mut self, win: &mut GlWindow, egui_output: egui::PlatformOutput) {
         if !egui_output.copied_text.is_empty() {
             self.clipboard.set(egui_output.copied_text);
         }
@@ -159,11 +164,7 @@ impl EguiState {
     }
 
     /// Convenience method for outputting what egui emits each frame (borrow PlatformOutput)
-    pub fn fuse_output_borrow(
-        &mut self,
-        win: &mut GlWindow,
-        egui_output: &epi::egui::PlatformOutput,
-    ) {
+    pub fn fuse_output_borrow(&mut self, win: &mut GlWindow, egui_output: &egui::PlatformOutput) {
         if !egui_output.copied_text.is_empty() {
             app::copy(&egui_output.copied_text);
         }

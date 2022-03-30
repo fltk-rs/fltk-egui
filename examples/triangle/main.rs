@@ -1,10 +1,9 @@
 use egui_backend::{
-    epi::egui::{Color32, Image},
+    egui::{Color32, Image},
     fltk::{enums::*, prelude::*, *},
     glow, tex_handle_from_vec_color32,
 };
 
-use epi::egui;
 use fltk_egui as egui_backend;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -45,9 +44,13 @@ fn main() {
             | enums::Event::Resize
             | enums::Event::Move
             | enums::Event::Drag => {
-                let mut state = state.borrow_mut();
-                state.fuse_input(win, ev);
-                true
+                // Using "if let ..." for safety.
+                if let Ok(mut state) = state.try_borrow_mut() {
+                    state.fuse_input(win, ev);
+                    true
+                } else {
+                    false
+                }
             }
             _ => false,
         }
