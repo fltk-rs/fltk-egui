@@ -55,6 +55,7 @@ use clipboard::Clipboard;
 /// Construct the backend.
 pub fn with_fltk(win: &mut GlWindow) -> (glow::Context, Painter, EguiState) {
     app::set_screen_scale(win.screen_num(), 1.);
+    app::keyboard_screen_scaling(false);
     let gl = unsafe { glow::Context::from_loader_function(|s| win.get_proc_address(s) as _) };
 
     unsafe {

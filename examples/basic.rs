@@ -21,7 +21,8 @@ fn main() {
     win.make_current();
 
     //Init backend
-    let (gl, mut painter, egui_state) = egui_backend::with_fltk(&mut win);
+    let (gl, mut painter, mut egui_state) = egui_backend::with_fltk(&mut win);
+    egui_state.set_visual_scale(1.5);
 
     //Init egui ctx
     let egui_ctx = egui::Context::default();
