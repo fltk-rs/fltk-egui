@@ -151,8 +151,8 @@ impl EguiState {
         let pixels_per_point = self.input.pixels_per_point;
         let take = self.input.take();
         self.input.pixels_per_point = pixels_per_point;
-        if let Some(ppu) = pixels_per_point {
-            self._pixels_per_point = ppu;
+        if let Some(ppp) = pixels_per_point {
+            self._pixels_per_point = ppp;
         }
         take
     }
@@ -212,9 +212,7 @@ pub fn input_to_egui(
     match event {
         enums::Event::Resize => {
             state.canvas_size = [win.width() as u32, win.height() as u32];
-            if let Some(ppu) = state.input.pixels_per_point {
-                state.set_visual_scale(ppu);
-            }
+            state.set_visual_scale(state.pixels_per_point());
             state._window_resized = true;
         }
 
@@ -256,14 +254,13 @@ pub fn input_to_egui(
         }
 
         enums::Event::Move | enums::Event::Drag => {
-            if let Some(ppu) = state.input.pixels_per_point {
-                let (x, y) = app::event_coords();
-                state.pointer_pos = pos2(x as f32 / ppu, y as f32 / ppu);
-                state
-                    .input
-                    .events
-                    .push(egui::Event::PointerMoved(state.pointer_pos))
-            }
+            let ppp = state.pixels_per_point();
+            let (x, y) = app::event_coords();
+            state.pointer_pos = pos2(x as f32 / ppp, y as f32 / ppp);
+            state
+                .input
+                .events
+                .push(egui::Event::PointerMoved(state.pointer_pos))
         }
 
         enums::Event::KeyUp => {
