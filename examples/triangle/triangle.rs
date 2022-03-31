@@ -2,7 +2,10 @@
 // based on the example from:
 // https://github.com/brendanzab/gl-rs/blob/master/gl/examples/triangle.rs
 
-use egui_backend::{glow::{HasContext, Program, Shader}, cast_slice};
+use egui_backend::{
+    cast_slice,
+    glow::{HasContext, Program, Shader},
+};
 use egui_glow::glow;
 use fltk_egui as egui_backend;
 use std::str;
@@ -84,7 +87,11 @@ impl Triangle {
             // Create a Vertex Buffer Object and copy the vertex data to it
 
             gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.vbo));
-            gl.buffer_data_u8_slice(glow::ARRAY_BUFFER, cast_slice(&VERTEX_DATA), glow::STATIC_DRAW);
+            gl.buffer_data_u8_slice(
+                glow::ARRAY_BUFFER,
+                cast_slice(&VERTEX_DATA),
+                glow::STATIC_DRAW,
+            );
 
             // Use shader program
             gl.use_program(Some(self.program));
@@ -108,4 +115,3 @@ impl Triangle {
         }
     }
 }
-

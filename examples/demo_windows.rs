@@ -1,6 +1,7 @@
 use egui_backend::{
     egui,
-    fltk::{enums::*, prelude::*, *}, glow,
+    fltk::{enums::*, prelude::*, *},
+    glow,
 };
 
 use fltk_egui as egui_backend;
@@ -19,13 +20,13 @@ fn main() {
     win.make_resizable(true);
     win.show();
     win.make_current();
-    
+
     //Init backend
     let (gl, mut painter, egui_state) = egui_backend::with_fltk(&mut win);
 
     //Init egui ctx
     let egui_ctx = egui::Context::default();
-    
+
     let state = Rc::new(RefCell::new(egui_state));
 
     win.handle({
@@ -57,9 +58,10 @@ fn main() {
     while fltk_app.wait() {
         // Clear the screen to dark red
         draw_background(&gl);
+
         let mut state = state.borrow_mut();
         state.input.time = Some(start_time.elapsed().as_secs_f64());
-        let egui_output = egui_ctx.run(state.input.take(), |ctx| {
+        let egui_output = egui_ctx.run(state.take_input(), |ctx| {
             demo_windows.ui(&ctx);
         });
 
@@ -75,7 +77,7 @@ fn main() {
             painter.paint_and_update_textures(
                 &gl,
                 state.canvas_size,
-                state.pixels_per_point,
+                state.pixels_per_point(),
                 meshes,
                 &egui_output.textures_delta,
             );

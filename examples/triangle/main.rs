@@ -74,7 +74,7 @@ fn main() {
 
         let mut state = state.borrow_mut();
         state.input.time = Some(start_time.elapsed().as_secs_f64());
-        let egui_output = egui_ctx.run(state.input.take(), |ctx| {
+        let egui_output = egui_ctx.run(state.take_input(), |ctx| {
 
             //Then draw our triangle.
             triangle.draw(&gl);
@@ -122,7 +122,7 @@ fn main() {
         painter.paint_and_update_textures(
             &gl,
             state.canvas_size,
-            state.pixels_per_point,
+            state.pixels_per_point(),
             meshes,
             &egui_output.textures_delta,
         );

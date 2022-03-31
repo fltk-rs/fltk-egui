@@ -72,6 +72,9 @@ fn main() {
         }
     });
 
+    // Set visual scale or egui display scaling
+    state.borrow_mut().set_visual_scale(1.5);
+
     let start_time = Instant::now();
     let mut name = String::new();
     let mut age: i32 = 0;
@@ -85,7 +88,7 @@ fn main() {
         state.input.time = Some(start_time.elapsed().as_secs_f64());
         frm.set_label(&format!("Hello {}", &name));
         slider.set_value(age as f64 / 120.);
-        let egui_output = egui_ctx.run(state.input.take(), |ctx| {
+        let egui_output = egui_ctx.run(state.take_input(), |ctx| {
             egui::CentralPanel::default().show(&ctx, |ui| {
                 ui.heading("My egui Application");
                 ui.horizontal(|ui| {
@@ -116,7 +119,7 @@ fn main() {
         painter.paint_and_update_textures(
             &gl,
             state.canvas_size,
-            state.pixels_per_point,
+            state.pixels_per_point(),
             meshes,
             &egui_output.textures_delta,
         );
