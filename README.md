@@ -1,6 +1,6 @@
 # fltk-egui
 
-An FLTK backend for Egui using a GlWindow. The code is largely based on https://github.com/ArjunNair/egui_sdl2_gl modified for fltk-rs.
+An FLTK backend for Egui using a GlWindow.
 
 ## To use on Linux
 Install FLTK deps:
