@@ -145,6 +145,7 @@ impl EguiState {
         }
     }
 
+    /// Don't use state.input.take() use this fn instead (to avoid pixels per point miscalculation).
     pub fn take_input(&mut self) -> egui::RawInput {
         self.input.max_texture_side = Some(self.max_texture_side);
         let pixels_per_point = self.input.pixels_per_point;
