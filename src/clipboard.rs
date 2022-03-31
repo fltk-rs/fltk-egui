@@ -2,14 +2,12 @@ pub struct Clipboard {
     clipboard: Option<copypasta::ClipboardContext>,
 }
 
-
 impl Default for Clipboard {
     fn default() -> Self {
         Self {
             clipboard: init_copypasta(),
         }
     }
-   
 }
 
 impl Clipboard {
@@ -36,7 +34,6 @@ impl Clipboard {
             }
         }
     }
-
 }
 
 fn init_copypasta() -> Option<copypasta::ClipboardContext> {

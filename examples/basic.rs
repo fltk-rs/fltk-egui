@@ -1,5 +1,5 @@
 use egui_backend::{
-    egui::{self},
+    egui,
     fltk::{prelude::*, *},
     glow,
 };
@@ -63,7 +63,7 @@ fn main() {
 
         let mut state = state.borrow_mut();
         state.input.time = Some(start_time.elapsed().as_secs_f64());
-        let egui_output = egui_ctx.run(state.input.take(), |ctx| {
+        let egui_output = egui_ctx.run(state.take_input(), |ctx| {
             egui::CentralPanel::default().show(&ctx, |ui| {
                 ui.heading("My egui Application");
                 ui.horizontal(|ui| {
@@ -93,7 +93,7 @@ fn main() {
         painter.paint_and_update_textures(
             &gl,
             state.canvas_size,
-            state.pixels_per_point,
+            state.pixels_per_point(),
             meshes,
             &egui_output.textures_delta,
         );

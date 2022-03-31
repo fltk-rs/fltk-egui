@@ -38,10 +38,9 @@ use std::time::Instant;
 // Re-export dependencies.
 pub use egui;
 use egui::{pos2, vec2, CursorIcon, Event, Key, Modifiers, Pos2, RawInput, Rect, Vec2};
-pub use egui_extras;
-use egui_extras::RetainedImage;
 use egui_glow::Painter;
 pub use egui_glow::{glow, painter};
+pub use egui_image::RetainedEguiImage;
 pub use fltk;
 use fltk::{
     app, enums,
@@ -49,8 +48,8 @@ use fltk::{
     window::GlWindow,
 };
 use glow::HasContext;
-
 mod clipboard;
+mod egui_image;
 use clipboard::Clipboard;
 
 /// Construct the backend.
@@ -67,7 +66,8 @@ pub fn with_fltk(win: &mut GlWindow) -> (glow::Context, Painter, EguiState) {
 
     let painter = Painter::new(&gl, None, "")
         .unwrap_or_else(|error| panic!("some OpenGL error occurred {}\n", error));
-    (gl, painter, EguiState::new(&win))
+    let max_texture_side = painter.max_texture_side();
+    (gl, painter, EguiState::new(&win, max_texture_side))
 }
 
 /// Frame time for FPS.
@@ -108,21 +108,23 @@ pub struct EguiState {
     pub clipboard: Clipboard,
     pub fuse_cursor: FusedCursor,
     pub input: RawInput,
-    pub modifiers: Modifiers,
-    pub pixels_per_point: f32,
+    _pixels_per_point: f32,
     pub pointer_pos: Pos2,
-    pub screen_rect: Rect,
+    /// default value is 12.0
     pub scroll_factor: f32,
+    /// default value is 8.0
     pub zoom_factor: f32,
     /// Internal use case for fn window_resized()
     _window_resized: bool,
+    pub max_texture_side: usize,
 }
 
 impl EguiState {
     /// Construct a new state
-    pub fn new(win: &GlWindow) -> EguiState {
+    pub fn new(win: &GlWindow, max_texture_side: usize) -> EguiState {
+        let ppu = win.pixels_per_unit();
         let (width, height) = (win.width(), win.height());
-        let rect = vec2(width as f32, height as f32) / win.pixels_per_unit();
+        let rect = vec2(width as f32, height as f32) / ppu;
         let screen_rect = Rect::from_min_size(Pos2::new(0f32, 0f32), rect);
         EguiState {
             canvas_size: [width as u32, height as u32],
@@ -130,17 +132,32 @@ impl EguiState {
             fuse_cursor: FusedCursor::new(),
             input: egui::RawInput {
                 screen_rect: Some(screen_rect),
-                pixels_per_point: Some(win.pixels_per_unit()),
+                pixels_per_point: Some(ppu),
+                max_texture_side: Some(max_texture_side),
                 ..Default::default()
             },
-            modifiers: Modifiers::default(),
-            pixels_per_point: win.pixels_per_unit(),
+            max_texture_side,
+            _pixels_per_point: ppu,
             pointer_pos: Pos2::new(0f32, 0f32),
-            screen_rect,
-            scroll_factor: 12.,
-            zoom_factor: 8.,
+            scroll_factor: 12.0,
+            zoom_factor: 8.0,
             _window_resized: false,
         }
+    }
+
+    pub fn take_input(&mut self) -> egui::RawInput {
+        self.input.max_texture_side = Some(self.max_texture_side);
+        let pixels_per_point = self.input.pixels_per_point;
+        let take = self.input.take();
+        self.input.pixels_per_point = pixels_per_point;
+        if let Some(ppu) = pixels_per_point {
+            self._pixels_per_point = ppu;
+        }
+        take
+    }
+
+    pub fn pixels_per_point(&self) -> f32 {
+        self._pixels_per_point
     }
 
     /// Check if current window being resized.
@@ -170,6 +187,18 @@ impl EguiState {
         }
         translate_cursor(win, &mut self.fuse_cursor, egui_output.cursor_icon);
     }
+
+    /// Set visual scale, e.g: 0.8, 1.5, 2.0 .etc (default is 1.0)
+    pub fn set_visual_scale(&mut self, size: f32) {
+        // have to be setted the pixels_per_point of both the inner (input) and the state.
+        self.input.pixels_per_point = Some(size);
+        self._pixels_per_point = size;
+
+        // resize rect with canvas.
+        let canvas_size = self.canvas_size;
+        let rect = vec2(canvas_size[0] as f32, canvas_size[1] as f32) / size;
+        self.input.screen_rect = Some(Rect::from_min_size(Default::default(), rect));
+    }
 }
 
 /// Handles input/events from FLTK
@@ -181,14 +210,13 @@ pub fn input_to_egui(
 ) {
     match event {
         enums::Event::Resize => {
-            let ppu = win.pixels_per_unit();
-            state.input.pixels_per_point = Some(ppu);
-            let (w, h) = (win.width(), win.height());
-            state.canvas_size = [w as u32, h as u32];
-            let rect = vec2(w as f32, h as f32) / ppu;
-            state.input.screen_rect = Some(Rect::from_min_size(Default::default(), rect));
+            state.canvas_size = [win.width() as u32, win.height() as u32];
+            if let Some(ppu) = state.input.pixels_per_point {
+                state.set_visual_scale(ppu);
+            }
             state._window_resized = true;
         }
+
         //MouseButonLeft pressed is the only one needed by egui
         enums::Event::Push => {
             let mouse_btn = match app::event_mouse_button() {
@@ -202,7 +230,7 @@ pub fn input_to_egui(
                     pos: state.pointer_pos,
                     button: pressed,
                     pressed: true,
-                    modifiers: state.modifiers,
+                    modifiers: state.input.modifiers,
                 })
             }
         }
@@ -221,25 +249,26 @@ pub fn input_to_egui(
                     pos: state.pointer_pos,
                     button: released,
                     pressed: false,
-                    modifiers: state.modifiers,
+                    modifiers: state.input.modifiers,
                 })
             }
         }
 
         enums::Event::Move | enums::Event::Drag => {
-            let (x, y) = app::event_coords();
-            let pixels_per_point = state.pixels_per_point;
-            state.pointer_pos = pos2(x as f32 / pixels_per_point, y as f32 / pixels_per_point);
-            state
-                .input
-                .events
-                .push(egui::Event::PointerMoved(state.pointer_pos))
+            if let Some(ppu) = state.input.pixels_per_point {
+                let (x, y) = app::event_coords();
+                state.pointer_pos = pos2(x as f32 / ppu, y as f32 / ppu);
+                state
+                    .input
+                    .events
+                    .push(egui::Event::PointerMoved(state.pointer_pos))
+            }
         }
 
         enums::Event::KeyUp => {
             if let Some(key) = translate_virtual_key_code(app::event_key()) {
                 let keymod = app::event_state();
-                state.modifiers = Modifiers {
+                state.input.modifiers = Modifiers {
                     alt: (keymod & enums::EventState::Alt == enums::EventState::Alt),
                     ctrl: (keymod & enums::EventState::Ctrl == enums::EventState::Ctrl),
                     shift: (keymod & enums::EventState::Shift == enums::EventState::Shift),
@@ -248,7 +277,7 @@ pub fn input_to_egui(
                     //TOD: Test on both windows and mac
                     command: (keymod & enums::EventState::Command == enums::EventState::Command),
                 };
-                if state.modifiers.command && key == Key::V {
+                if state.input.modifiers.command && key == Key::V {
                     if let Some(value) = state.clipboard.get() {
                         state.input.events.push(egui::Event::Text(value));
                     }
@@ -267,7 +296,7 @@ pub fn input_to_egui(
             }
             if let Some(key) = translate_virtual_key_code(app::event_key()) {
                 let keymod = app::event_state();
-                state.modifiers = Modifiers {
+                state.input.modifiers = Modifiers {
                     alt: (keymod & enums::EventState::Alt == enums::EventState::Alt),
                     ctrl: (keymod & enums::EventState::Ctrl == enums::EventState::Ctrl),
                     shift: (keymod & enums::EventState::Shift == enums::EventState::Shift),
@@ -280,20 +309,20 @@ pub fn input_to_egui(
                 state.input.events.push(Event::Key {
                     key,
                     pressed: true,
-                    modifiers: state.modifiers,
+                    modifiers: state.input.modifiers,
                 });
 
-                if state.modifiers.command && key == Key::C {
+                if state.input.modifiers.command && key == Key::C {
                     // println!("copy event");
                     state.input.events.push(Event::Copy)
-                } else if state.modifiers.command && key == Key::X {
+                } else if state.input.modifiers.command && key == Key::X {
                     // println!("cut event");
                     state.input.events.push(Event::Cut)
                 } else {
                     state.input.events.push(Event::Key {
                         key,
                         pressed: false,
-                        modifiers: state.modifiers,
+                        modifiers: state.input.modifiers,
                     })
                 }
             }
@@ -452,7 +481,7 @@ pub trait EguiImageConvertible<I>
 where
     I: ImageExt,
 {
-    fn egui_image(self, debug_name: &str) -> Result<RetainedImage, FltkError>;
+    fn egui_image(self, debug_name: &str) -> Result<RetainedEguiImage, FltkError>;
 }
 
 impl<I> EguiImageConvertible<I> for I
@@ -460,7 +489,7 @@ where
     I: ImageExt,
 {
     /// Return (egui_extras::RetainedImage)
-    fn egui_image(self, debug_name: &str) -> Result<RetainedImage, FltkError> {
+    fn egui_image(self, debug_name: &str) -> Result<RetainedEguiImage, FltkError> {
         let size = [self.data_w() as usize, self.data_h() as usize];
         let color_image = egui::ColorImage::from_rgba_unmultiplied(
             size,
@@ -470,17 +499,17 @@ where
                 .to_rgb_data(),
         );
 
-        Ok(RetainedImage::from_color_image(debug_name, color_image))
+        Ok(RetainedEguiImage::from_color_image(debug_name, color_image))
     }
 }
 
 pub trait EguiSvgConvertible {
-    fn egui_svg_image(self, debug_name: &str) -> Result<RetainedImage, FltkError>;
+    fn egui_svg_image(self, debug_name: &str) -> Result<RetainedEguiImage, FltkError>;
 }
 
 impl EguiSvgConvertible for fltk::image::SvgImage {
-    /// Return (egui_extras::RetainedImage)
-    fn egui_svg_image(mut self, debug_name: &str) -> Result<RetainedImage, FltkError> {
+    /// Return (egui_extras::RetainedEguiImage)
+    fn egui_svg_image(mut self, debug_name: &str) -> Result<RetainedEguiImage, FltkError> {
         self.normalize();
         let size = [self.data_w() as usize, self.data_h() as usize];
         let color_image = egui::ColorImage::from_rgba_unmultiplied(
@@ -491,7 +520,7 @@ impl EguiSvgConvertible for fltk::image::SvgImage {
                 .to_rgb_data(),
         );
 
-        Ok(RetainedImage::from_color_image(debug_name, color_image))
+        Ok(RetainedEguiImage::from_color_image(debug_name, color_image))
     }
 }
 

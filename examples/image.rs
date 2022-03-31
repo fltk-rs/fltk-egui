@@ -57,9 +57,9 @@ fn main() {
         .unwrap()
         .egui_image("egui.jpg")
         .unwrap();
-    let retained_egui_image_svg = SvgImage::load("screenshots/crates.svg")
+    let retained_egui_image_svg = SvgImage::load("screenshots/fingerprint.svg")
         .unwrap()
-        .egui_svg_image("crates.svg")
+        .egui_svg_image("fingerprint.svg")
         .unwrap();
 
     let start_time = Instant::now();
@@ -71,12 +71,12 @@ fn main() {
 
         let mut state = state.borrow_mut();
         state.input.time = Some(start_time.elapsed().as_secs_f64());
-        let egui_output = egui_ctx.run(state.input.take(), |ctx| {
+        let egui_output = egui_ctx.run(state.take_input(), |ctx| {
             egui::CentralPanel::default().show(&ctx, |ui| {
                 egui::ScrollArea::vertical().show(ui, |ui| {
-                    ui.add(Label::new("this is crates.svg badge"));
+                    ui.add(Label::new("this is fingerprint.svg"));
                     retained_egui_image_svg.show(ui);
-                    ui.add(Label::new("this is egui.jpg screenshot"));
+                    ui.add(Label::new("this is egui.jpg"));
                     retained_egui_image.show(ui);
                     if ui
                         .button("Quit?")
@@ -96,7 +96,7 @@ fn main() {
         painter.paint_and_update_textures(
             &gl,
             state.canvas_size,
-            state.pixels_per_point,
+            state.pixels_per_point(),
             meshes,
             &egui_output.textures_delta,
         );
