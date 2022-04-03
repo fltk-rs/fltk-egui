@@ -7,7 +7,7 @@ use fltk::{
     image::SvgImage,
     prelude::{FltkError, ImageExt},
 };
-use usync::Mutex;
+use std::sync::Mutex;
 
 /// An image to be shown in egui.
 ///
@@ -119,8 +119,9 @@ impl RetainedEguiImage {
     pub fn texture_id(&self, ctx: &egui::Context) -> egui::TextureId {
         self.texture
             .lock()
+            .unwrap()
             .get_or_insert_with(|| {
-                let image: &mut ColorImage = &mut self.image.lock();
+                let image: &mut ColorImage = &mut self.image.lock().unwrap();
                 let image = std::mem::take(image);
                 ctx.load_texture(&self.debug_name, image)
             })
