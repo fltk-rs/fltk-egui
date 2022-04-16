@@ -1,21 +1,20 @@
 pub struct Clipboard {
-    clipboard: Option<copypasta::ClipboardContext>,
+    arboard: Option<arboard::Clipboard>,
 }
 
 impl Default for Clipboard {
     fn default() -> Self {
         Self {
-            clipboard: init_copypasta(),
+            arboard: init_arboard(),
         }
     }
 }
 
 impl Clipboard {
     pub fn get(&mut self) -> Option<String> {
-        if let Some(clipboard) = &mut self.clipboard {
-            use copypasta::ClipboardProvider as _;
-            match clipboard.get_contents() {
-                Ok(contents) => Some(contents),
+        if let Some(clipboard) = &mut self.arboard {
+            match clipboard.get_text() {
+                Ok(text) => Some(text),
                 Err(err) => {
                     eprintln!("Paste error: {}", err);
                     None
@@ -27,17 +26,16 @@ impl Clipboard {
     }
 
     pub fn set(&mut self, text: String) {
-        if let Some(clipboard) = &mut self.clipboard {
-            use copypasta::ClipboardProvider as _;
-            if let Err(err) = clipboard.set_contents(text) {
+        if let Some(clipboard) = &mut self.arboard {
+            if let Err(err) = clipboard.set_text(text) {
                 eprintln!("Copy/Cut error: {}", err);
             }
         }
     }
 }
 
-fn init_copypasta() -> Option<copypasta::ClipboardContext> {
-    match copypasta::ClipboardContext::new() {
+fn init_arboard() -> Option<arboard::Clipboard> {
+    match arboard::Clipboard::new() {
         Ok(clipboard) => Some(clipboard),
         Err(err) => {
             eprintln!("Failed to initialize clipboard: {}", err);
