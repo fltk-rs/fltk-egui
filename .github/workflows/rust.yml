@@ -26,4 +26,4 @@ jobs:
       shell: bash
     - uses: actions/checkout@v2
     - name: Build
-      run: cargo build --examples --features=fltk-bundled
+      run: cargo build --examples
