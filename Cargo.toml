@@ -10,7 +10,7 @@ keywords = ["gui", "widgets", "graphics"]
 categories = ["gui"]
 readme = "README.md"
 license = "MIT"
-rust-version = "1.56"
+rust-version = "1.60"
 
 [dependencies]
 egui = "0.18"
