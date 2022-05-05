@@ -70,7 +70,7 @@ fn main() {
 
     while fltk_app.wait() {
         // Clear the screen to dark red
-        draw_background(&gl);
+        draw_background(&*gl);
 
         let mut state = state.borrow_mut();
         state.input.time = Some(start_time.elapsed().as_secs_f64());
@@ -120,10 +120,9 @@ fn main() {
         let meshes = egui_ctx.tessellate(egui_output.shapes);
 
         painter.paint_and_update_textures(
-            &gl,
             state.canvas_size,
             state.pixels_per_point(),
-            meshes,
+            &meshes,
             &egui_output.textures_delta,
         );
 

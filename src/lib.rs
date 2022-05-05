@@ -51,13 +51,14 @@ use glow::HasContext;
 mod clipboard;
 mod egui_image;
 use clipboard::Clipboard;
+use std::rc::Rc;
 
 /// Construct the backend.
-pub fn with_fltk(win: &mut GlWindow) -> (glow::Context, Painter, EguiState) {
+pub fn with_fltk(win: &mut GlWindow) -> (Rc<glow::Context>, Painter, EguiState) {
     app::set_screen_scale(win.screen_num(), 1.);
     app::keyboard_screen_scaling(false);
     let gl = unsafe { glow::Context::from_loader_function(|s| win.get_proc_address(s) as _) };
-
+    let gl = Rc::from(gl);
     unsafe {
         // to fix black textured.
         gl.enable(glow::FRAMEBUFFER_SRGB);
@@ -65,7 +66,7 @@ pub fn with_fltk(win: &mut GlWindow) -> (glow::Context, Painter, EguiState) {
         gl.enable(glow::MULTISAMPLE)
     };
 
-    let painter = Painter::new(&gl, None, "")
+    let painter = Painter::new(gl.clone(), None, "")
         .unwrap_or_else(|error| panic!("some OpenGL error occurred {}\n", error));
     let max_texture_side = painter.max_texture_side();
     (gl, painter, EguiState::new(&win, max_texture_side))
