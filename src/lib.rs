@@ -1,36 +1,4 @@
-/*!
-    # fltk-egui
-
-    An FLTK backend for Egui using a GlWindow.
-
-    ## Usage
-    Add to your Cargo.toml:
-    ```toml
-    [dependencies]
-    fltk-egui = "0.6" # targets egui 0.17
-    ```
-
-    On wayland desktop enable feature:
-    ```toml
-    [dependencies]
-    fltk-egui = { version = "0.6",  features = ["wayland"] }
-    ```
-
-    The basic premise is that egui is an immediate mode gui, while FLTK is retained.
-    To be able to run Egui code, events and redrawing would need to be handled/done in the FLTK event loop.
-    The events are those of the GlWindow, which are sent to egui's event handlers.
-    Other FLTK widgets can function also normally since there is no interference from Egui.
-
-    ## Examples
-    To run the examples, just run:
-    ```
-    $ cargo run --example demo_windows
-    $ cargo run --example triangle
-    $ cargo run --example basic
-    $ cargo run --example embedded
-    ```
-*/
-
+#![doc = include_str!("../README.md")]
 #![warn(clippy::all)]
 
 use std::time::Instant;
