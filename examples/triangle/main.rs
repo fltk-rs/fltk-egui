@@ -26,7 +26,7 @@ fn main() {
     win.make_current();
 
     //Init backend
-    let (gl, mut painter, egui_state) = egui_backend::with_fltk(&mut win);
+    let (mut painter, egui_state) = egui_backend::with_fltk(&mut win);
 
     //Init egui ctx
     let egui_ctx = egui::Context::default();
@@ -59,7 +59,7 @@ fn main() {
     let start_time = Instant::now();
 
     //We will draw a crisp white triangle using Glow OpenGL.
-    let triangle = triangle::Triangle::new(&gl);
+    let triangle = triangle::Triangle::new(painter.gl().as_ref());
 
     //Some variables to help draw a sine wave
     let mut sine_shift = 0f32;
@@ -70,14 +70,15 @@ fn main() {
 
     while fltk_app.wait() {
         // Clear the screen to dark red
-        draw_background(&*gl);
+        let gl = painter.gl().as_ref();
+        draw_background(gl);
 
         let mut state = state.borrow_mut();
         state.input.time = Some(start_time.elapsed().as_secs_f64());
         let egui_output = egui_ctx.run(state.take_input(), |ctx| {
 
             //Then draw our triangle.
-            triangle.draw(&gl);
+            triangle.draw(gl);
 
             //Draw a cool sine wave in a buffer.
             let mut srgba: Vec<Color32> = Vec::new();
@@ -135,7 +136,7 @@ fn main() {
         }
     }
 
-    triangle.free(&gl);
+    triangle.free(painter.gl().as_ref());
 }
 
 fn draw_background<GL: glow::HasContext>(gl: &GL) {

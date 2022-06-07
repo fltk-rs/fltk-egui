@@ -41,7 +41,7 @@ fn main() {
     gl_win.make_current();
 
     //Init backend
-    let (gl, mut painter, egui_state) = egui_backend::with_fltk(&mut gl_win);
+    let (mut painter, egui_state) = egui_backend::with_fltk(&mut gl_win);
 
     //Init egui ctx
     let egui_ctx = egui::Context::default();
@@ -82,7 +82,8 @@ fn main() {
 
     while fltk_app.wait() {
         // Clear the screen to dark red
-        draw_background(&*gl);
+        let gl = painter.gl().as_ref();
+        draw_background(gl);
 
         let mut state = state.borrow_mut();
         state.input.time = Some(start_time.elapsed().as_secs_f64());

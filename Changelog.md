@@ -1,3 +1,9 @@
+## Unreleased
+* Remove gl in favor of painter.gl()
+
+## 0.7.1 - 2022-05-10
+* Update egui 0.18.1
+
 ## 0.6.0 - 2022-03-31
 * Replace GL backend with egui_glow crate.
 * Update egui (v0.17).

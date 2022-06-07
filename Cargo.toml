@@ -16,7 +16,7 @@ rust-version = "1.60"
 egui = "0.18"
 egui_glow = { version = "0.18", default-features = false }
 arboard = { version = "2.1", default-features = false }
-fltk = { version = "1.3.2", features = ["enable-glwindow"] }
+fltk = { version = "1.3", features = ["enable-glwindow"] }
 
 # for the demo_windows example
 [dev-dependencies]
