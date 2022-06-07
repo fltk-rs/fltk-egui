@@ -21,7 +21,7 @@ fn main() {
     win.make_current();
 
     //Init backend
-    let (gl, mut painter, mut egui_state) = egui_backend::with_fltk(&mut win);
+    let (mut painter, mut egui_state) = egui_backend::with_fltk(&mut win);
     egui_state.set_visual_scale(1.5);
 
     //Init egui ctx
@@ -57,10 +57,10 @@ fn main() {
     let mut quit = false;
     let mut age: i32 = 17;
     let mut name: String = "".to_string();
-
     while fltk_app.wait() {
         // Clear the screen to dark red
-        draw_background(&*gl);
+        let gl = painter.gl().as_ref();
+        draw_background(gl);
 
         let mut state = state.borrow_mut();
         state.input.time = Some(start_time.elapsed().as_secs_f64());

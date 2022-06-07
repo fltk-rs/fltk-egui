@@ -22,7 +22,7 @@ use clipboard::Clipboard;
 use std::rc::Rc;
 
 /// Construct the backend.
-pub fn with_fltk(win: &mut GlWindow) -> (Rc<glow::Context>, Painter, EguiState) {
+pub fn with_fltk(win: &mut GlWindow) -> (Painter, EguiState) {
     app::set_screen_scale(win.screen_num(), 1.);
     app::keyboard_screen_scaling(false);
     let gl = unsafe { glow::Context::from_loader_function(|s| win.get_proc_address(s) as _) };
@@ -34,10 +34,10 @@ pub fn with_fltk(win: &mut GlWindow) -> (Rc<glow::Context>, Painter, EguiState) 
         gl.enable(glow::MULTISAMPLE)
     };
 
-    let painter = Painter::new(gl.clone(), None, "")
+    let painter = Painter::new(gl, None, "")
         .unwrap_or_else(|error| panic!("some OpenGL error occurred {}\n", error));
     let max_texture_side = painter.max_texture_side();
-    (gl, painter, EguiState::new(&win, max_texture_side))
+    (painter, EguiState::new(&win, max_texture_side))
 }
 
 /// Frame time for FPS.
@@ -77,6 +77,7 @@ pub struct EguiState {
     pub canvas_size: [u32; 2],
     pub clipboard: Clipboard,
     pub fuse_cursor: FusedCursor,
+    /// Use state.input.take() use this fn instead (to avoid pixels per point miscalculation).
     pub input: RawInput,
     _pixels_per_point: f32,
     pub pointer_pos: Pos2,
@@ -115,7 +116,6 @@ impl EguiState {
         }
     }
 
-    /// Don't use state.input.take() use this fn instead (to avoid pixels per point miscalculation).
     pub fn take_input(&mut self) -> egui::RawInput {
         self.input.max_texture_side = Some(self.max_texture_side);
         let pixels_per_point = self.input.pixels_per_point;
