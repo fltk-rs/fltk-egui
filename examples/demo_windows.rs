@@ -4,6 +4,8 @@ use egui_backend::{
     glow,
 };
 
+use egui_demo_lib::DemoWindows;
+use fltk::{app::App, window::GlutWindow};
 use fltk_egui as egui_backend;
 use std::rc::Rc;
 use std::{cell::RefCell, time::Instant};
@@ -21,12 +23,13 @@ fn main() {
     win.show();
     win.make_current();
 
-    //Init backend
+    let demo = egui_demo_lib::DemoWindows::default();
+    run_egui(fltk_app, win, demo);
+}
+
+fn run_egui(fltk_app: App, mut win: GlutWindow, demo: DemoWindows) {
+    // Init backend
     let (mut painter, egui_state) = egui_backend::with_fltk(&mut win);
-
-    //Init egui ctx
-    let egui_ctx = egui::Context::default();
-
     let state = Rc::new(RefCell::new(egui_state));
 
     win.handle({
@@ -52,8 +55,10 @@ fn main() {
         }
     });
 
+    let egui_ctx = egui::Context::default();
     let start_time = Instant::now();
-    let mut demo_windows = egui_demo_lib::DemoWindows::default();
+    let mut demo_windows = demo;
+
     while fltk_app.wait() {
         // Clear the screen to dark red
         let gl = painter.gl().as_ref();
@@ -65,12 +70,7 @@ fn main() {
             demo_windows.ui(&ctx);
         });
 
-        let window_resized = state.window_resized();
-        if window_resized {
-            win.clear_damage();
-        }
-
-        if egui_output.needs_repaint || window_resized {
+        if egui_output.needs_repaint || state.window_resized() {
             //Draw egui texture
             state.fuse_output(&mut win, egui_output.platform_output);
             let meshes = egui_ctx.tessellate(egui_output.shapes);
@@ -85,6 +85,8 @@ fn main() {
             app::awake();
         }
     }
+
+    painter.destroy();
 }
 
 fn draw_background<GL: glow::HasContext>(gl: &GL) {

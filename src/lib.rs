@@ -15,7 +15,7 @@ use fltk::{
     prelude::{FltkError, ImageExt, WidgetExt, WindowExt},
     window::GlWindow,
 };
-use glow::HasContext;
+
 mod clipboard;
 mod egui_image;
 use clipboard::Clipboard;
@@ -27,13 +27,6 @@ pub fn with_fltk(win: &mut GlWindow) -> (Painter, EguiState) {
     app::keyboard_screen_scaling(false);
     let gl = unsafe { glow::Context::from_loader_function(|s| win.get_proc_address(s) as _) };
     let gl = Rc::from(gl);
-    unsafe {
-        // to fix black textured.
-        gl.enable(glow::FRAMEBUFFER_SRGB);
-        // to enable MULTISAMPLE.
-        gl.enable(glow::MULTISAMPLE)
-    };
-
     let painter = Painter::new(gl, None, "")
         .unwrap_or_else(|error| panic!("some OpenGL error occurred {}\n", error));
     let max_texture_side = painter.max_texture_side();
@@ -184,6 +177,9 @@ pub fn input_to_egui(
             state.canvas_size = [win.width() as u32, win.height() as u32];
             state.set_visual_scale(state.pixels_per_point());
             state._window_resized = true;
+            if win.damage() {
+                win.clear_damage();
+            }
         }
 
         //MouseButonLeft pressed is the only one needed by egui
@@ -492,60 +488,117 @@ impl EguiSvgConvertible for fltk::image::SvgImage {
     }
 }
 
-/// egui::TextureHandle from Vec egui::Color32
-pub fn tex_handle_from_vec_color32(
-    ctx: &egui::Context,
-    debug_name: &str,
-    vec: Vec<egui::Color32>,
-    size: [usize; 2],
-) -> egui::TextureHandle {
-    let mut pixels: Vec<u8> = Vec::with_capacity(vec.len() * 4);
-    vec.into_iter().for_each(|x| {
-        pixels.push(x[0]);
-        pixels.push(x[1]);
-        pixels.push(x[2]);
-        pixels.push(x[3]);
-    });
-    let color_image = egui::ColorImage::from_rgba_unmultiplied(size, pixels.as_slice());
-    ctx.load_texture(debug_name, color_image)
+/// egui::ColorImage Extender.
+pub trait ColorImageExt {
+    fn from_vec_color32(size: [usize; 2], vec: Vec<egui::Color32>) -> Self;
+
+    fn from_color32_slice(size: [usize; 2], slice: &[egui::Color32]) -> Self;
 }
 
-/// egui::TextureHandle from slice of egui::Color32
-pub fn tex_handle_from_color32_slice(
-    ctx: &egui::Context,
-    debug_name: &str,
-    slice: &[egui::Color32],
-    size: [usize; 2],
-) -> egui::TextureHandle {
-    let mut pixels: Vec<u8> = Vec::with_capacity(slice.len() * 4);
-    slice.into_iter().for_each(|x| {
-        pixels.push(x[0]);
-        pixels.push(x[1]);
-        pixels.push(x[2]);
-        pixels.push(x[3]);
-    });
-    let color_image = egui::ColorImage::from_rgba_unmultiplied(size, pixels.as_slice());
-    ctx.load_texture(debug_name, color_image)
+impl ColorImageExt for egui::ColorImage {
+    fn from_vec_color32(size: [usize; 2], vec: Vec<egui::Color32>) -> Self {
+        let mut pixels: Vec<u8> = Vec::with_capacity(vec.len() * 4);
+        vec.into_iter().for_each(|x| {
+            pixels.push(x[0]);
+            pixels.push(x[1]);
+            pixels.push(x[2]);
+            pixels.push(x[3]);
+        });
+        egui::ColorImage::from_rgba_unmultiplied(size, &pixels)
+    }
+
+    fn from_color32_slice(size: [usize; 2], slice: &[egui::Color32]) -> Self {
+        let mut pixels: Vec<u8> = Vec::with_capacity(slice.len() * 4);
+        slice.into_iter().for_each(|x| {
+            pixels.push(x[0]);
+            pixels.push(x[1]);
+            pixels.push(x[2]);
+            pixels.push(x[3]);
+        });
+        egui::ColorImage::from_rgba_unmultiplied(size, &pixels)
+    }
 }
 
-/// egui::TextureHandle from slice of u8
-pub fn tex_handle_from_u8_slice(
-    ctx: &egui::Context,
-    debug_name: &str,
-    slice: &[u8],
-    size: [usize; 2],
-) -> egui::TextureHandle {
-    let color_image = egui::ColorImage::from_rgba_unmultiplied(size, slice);
-    ctx.load_texture(debug_name, color_image)
+/// egui::TextureHandle Extender.
+pub trait TextureHandleExt {
+    /// egui::TextureHandle from Vec u8
+    fn from_vec_u8(
+        ctx: &egui::Context,
+        debug_name: &str,
+        size: [usize; 2],
+        vec: Vec<u8>,
+    ) -> egui::TextureHandle;
+
+    fn from_u8_slice(
+        ctx: &egui::Context,
+        debug_name: &str,
+        size: [usize; 2],
+        slice: &[u8],
+    ) -> egui::TextureHandle;
+
+    fn from_vec_color32(
+        ctx: &egui::Context,
+        debug_name: &str,
+        size: [usize; 2],
+        vec: Vec<egui::Color32>,
+    ) -> egui::TextureHandle;
+
+    fn from_color32_slice(
+        ctx: &egui::Context,
+        debug_name: &str,
+        size: [usize; 2],
+        slice: &[egui::Color32],
+    ) -> egui::TextureHandle;
 }
 
-/// egui::TextureHandle from Vec u8
-pub fn tex_handle_from_vec_u8(
-    ctx: &egui::Context,
-    debug_name: &str,
-    vec: Vec<u8>,
-    size: [usize; 2],
-) -> egui::TextureHandle {
-    let color_image = egui::ColorImage::from_rgba_unmultiplied(size, vec.as_slice());
-    ctx.load_texture(debug_name, color_image)
+impl TextureHandleExt for egui::TextureHandle {
+    fn from_vec_u8(ctx: &egui::Context, debug_name: &str, size: [usize; 2], vec: Vec<u8>) -> Self {
+        let color_image = egui::ColorImage::from_rgba_unmultiplied(size, &vec);
+        drop(vec);
+        ctx.load_texture(debug_name, color_image)
+    }
+
+    fn from_u8_slice(
+        ctx: &egui::Context,
+        debug_name: &str,
+        size: [usize; 2],
+        slice: &[u8],
+    ) -> Self {
+        let color_image = egui::ColorImage::from_rgba_unmultiplied(size, slice);
+        ctx.load_texture(debug_name, color_image)
+    }
+
+    fn from_vec_color32(
+        ctx: &egui::Context,
+        debug_name: &str,
+        size: [usize; 2],
+        vec: Vec<egui::Color32>,
+    ) -> Self {
+        let mut pixels: Vec<u8> = Vec::with_capacity(vec.len() * 4);
+        vec.into_iter().for_each(|x| {
+            pixels.push(x[0]);
+            pixels.push(x[1]);
+            pixels.push(x[2]);
+            pixels.push(x[3]);
+        });
+        let color_image = egui::ColorImage::from_rgba_unmultiplied(size, pixels.as_slice());
+        ctx.load_texture(debug_name, color_image)
+    }
+
+    fn from_color32_slice(
+        ctx: &egui::Context,
+        debug_name: &str,
+        size: [usize; 2],
+        slice: &[egui::Color32],
+    ) -> Self {
+        let mut pixels: Vec<u8> = Vec::with_capacity(slice.len() * 4);
+        slice.into_iter().for_each(|x| {
+            pixels.push(x[0]);
+            pixels.push(x[1]);
+            pixels.push(x[2]);
+            pixels.push(x[3]);
+        });
+        let color_image = egui::ColorImage::from_rgba_unmultiplied(size, pixels.as_slice());
+        ctx.load_texture(debug_name, color_image)
+    }
 }

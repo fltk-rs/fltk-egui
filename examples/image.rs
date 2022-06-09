@@ -22,12 +22,8 @@ fn main() {
     win.show();
     win.make_current();
 
-    //Init backend
+    // Init backend
     let (mut painter, egui_state) = egui_backend::with_fltk(&mut win);
-
-    //Init egui ctx
-    let egui_ctx = egui::Context::default();
-
     let state = Rc::from(RefCell::from(egui_state));
 
     win.handle({
@@ -62,6 +58,7 @@ fn main() {
         .egui_svg_image("fingerprint.svg")
         .unwrap();
 
+    let egui_ctx = egui::Context::default();
     let start_time = Instant::now();
     let mut quit = false;
 
@@ -90,25 +87,28 @@ fn main() {
             });
         });
 
-        state.fuse_output(&mut win, egui_output.platform_output);
-
-        //Draw egui texture
-        let meshes = egui_ctx.tessellate(egui_output.shapes);
-        painter.paint_and_update_textures(
-            state.canvas_size,
-            state.pixels_per_point(),
-            &meshes,
-            &egui_output.textures_delta,
-        );
-        win.swap_buffers();
-        win.flush();
-
         if egui_output.needs_repaint || state.window_resized() {
+            state.fuse_output(&mut win, egui_output.platform_output);
+            let meshes = egui_ctx.tessellate(egui_output.shapes);
+
+            painter.paint_and_update_textures(
+                state.canvas_size,
+                state.pixels_per_point(),
+                &meshes,
+                &egui_output.textures_delta,
+            );
+
+            win.swap_buffers();
+            win.flush();
             app::awake();
-        } else if quit {
+        }
+
+        if quit {
             break;
         }
     }
+
+    painter.destroy();
 }
 
 fn draw_background<GL: glow::HasContext>(gl: &GL) {

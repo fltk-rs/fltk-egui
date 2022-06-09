@@ -29,11 +29,12 @@ Please check the [basic example](examples/basic.rs).
 
 ## Examples
 To run the examples, just run:
+
 ```
-$ cargo run --example demo_windows
-$ cargo run --example triangle
-$ cargo run --example basic
-$ cargo run --example embedded
+cargo run --example basic
+cargo run --example demo_windows
+cargo run --example triangle
+cargo run --example embedded
 ```
 
 A demo app can be found here:

@@ -75,7 +75,6 @@ impl Triangle {
         let vs = compile_shader(gl, VS_SRC, glow::VERTEX_SHADER);
         let fs = compile_shader(gl, FS_SRC, glow::FRAGMENT_SHADER);
         let program = link_program(gl, vs, fs);
-
         let vao = unsafe { gl.create_vertex_array().unwrap() };
         let vbo = unsafe { gl.create_buffer().unwrap() };
         Triangle { program, vao, vbo }
