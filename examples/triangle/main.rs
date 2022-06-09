@@ -99,12 +99,12 @@ fn main() {
                 match &mut texture {
                     Some(texture) => {
                         // and then set new color image.
-                        let new_color_image = ColorImage::from_color32_slice(texture.size(), &srgba);
+                        let new_color_image = ColorImage::from_vec_color32(texture.size(), srgba);
                         texture.set(new_color_image);
                     }
                     _ => {
                         // We just need to Initialize egui::TextureHandle and create texture id once.
-                        let new_texture = TextureHandle::from_color32_slice(ctx, "sinewave", [PIC_WIDTH as usize, PIC_HEIGHT as usize], &srgba);
+                        let new_texture = TextureHandle::from_vec_color32(ctx, "sinewave", [PIC_WIDTH as usize, PIC_HEIGHT as usize], srgba);
                         texture = Some(new_texture);
                     }
                 }
