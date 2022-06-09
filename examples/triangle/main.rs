@@ -1,7 +1,7 @@
 use egui_backend::{
-    egui::{Color32, Image},
+    egui::{Color32, ColorImage, Image, TextureHandle},
     fltk::{enums::*, prelude::*, *},
-    glow, tex_handle_from_vec_color32,
+    glow, ColorImageExt, TextureHandleExt,
 };
 
 use fltk_egui as egui_backend;
@@ -25,12 +25,8 @@ fn main() {
     win.show();
     win.make_current();
 
-    //Init backend
+    // Init backend
     let (mut painter, egui_state) = egui_backend::with_fltk(&mut win);
-
-    //Init egui ctx
-    let egui_ctx = egui::Context::default();
-
     let state = Rc::from(RefCell::from(egui_state));
 
     win.handle({
@@ -43,6 +39,7 @@ fn main() {
             | enums::Event::MouseWheel
             | enums::Event::Resize
             | enums::Event::Move
+            | enums::Event::Focus
             | enums::Event::Drag => {
                 // Using "if let ..." for safety.
                 if let Ok(mut state) = state.try_borrow_mut() {
@@ -56,14 +53,16 @@ fn main() {
         }
     });
 
-    let start_time = Instant::now();
-
-    //We will draw a crisp white triangle using Glow OpenGL.
+    // We will draw a crisp white triangle using Glow OpenGL.
     let triangle = triangle::Triangle::new(painter.gl().as_ref());
 
-    //Some variables to help draw a sine wave
+    // Some variables to help draw a sine wave
     let mut sine_shift = 0f32;
     let mut amplitude: f32 = 50f32;
+    let mut texture: Option<TextureHandle> = None;
+
+    let egui_ctx = egui::Context::default();
+    let start_time = Instant::now();
     let mut test_str: String =
         "A text box to write in. Cut, copy, paste commands are available.".to_owned();
     let mut quit = false;
@@ -76,38 +75,51 @@ fn main() {
         let mut state = state.borrow_mut();
         state.input.time = Some(start_time.elapsed().as_secs_f64());
         let egui_output = egui_ctx.run(state.take_input(), |ctx| {
-
-            //Then draw our triangle.
+            // Draw our triangle.
             triangle.draw(gl);
 
-            //Draw a cool sine wave in a buffer.
-            let mut srgba: Vec<Color32> = Vec::new();
-            let mut angle = 0f32;
-            for y in 0..PIC_HEIGHT {
-                for x in 0..PIC_WIDTH {
-                    srgba.push(Color32::BLACK);
-                    if y == PIC_HEIGHT - 1 {
-                        let y = amplitude * (angle * std::f32::consts::PI / 180f32 + sine_shift).sin();
-                        let y = PIC_HEIGHT as f32 / 2f32 - y;
-                        srgba[(y as i32 * PIC_WIDTH + x) as usize] = Color32::YELLOW;
-                        angle += 360f32 / PIC_WIDTH as f32;
+            egui::Window::new("Egui with FLTK and GL").show(ctx, |ui| {
+                // Compose sine wave in a buffer.
+                let mut srgba: Vec<Color32> = Vec::new();
+                let mut angle = 0f32;
+                for y in 0..PIC_HEIGHT {
+                    for x in 0..PIC_WIDTH {
+                        srgba.push(Color32::BLACK);
+                        if y == PIC_HEIGHT - 1 {
+                            let y = amplitude * (angle * std::f32::consts::PI / 180f32 + sine_shift).sin();
+                            let y = PIC_HEIGHT as f32 / 2f32 - y;
+                            srgba[(y as i32 * PIC_WIDTH + x) as usize] = Color32::YELLOW;
+                            angle += 360f32 / PIC_WIDTH as f32;
+                        }
                     }
                 }
-            }
 
-            sine_shift += 0.1f32;
+                sine_shift += 0.1f32;
 
+                match &mut texture {
+                    Some(texture) => {
+                        // and then set new color image.
+                        let new_color_image = ColorImage::from_color32_slice(texture.size(), &srgba);
+                        texture.set(new_color_image);
+                    }
+                    _ => {
+                        // We just need to Initialize egui::TextureHandle and create texture id once.
+                        let new_texture = TextureHandle::from_color32_slice(ctx, "sinewave", [PIC_WIDTH as usize, PIC_HEIGHT as usize], &srgba);
+                        texture = Some(new_texture);
+                    }
+                }
 
-            egui::Window::new("Egui with FLTK and GL").show(&ctx, |ui| {
-                //Image just needs a texture id reference, so we just pass it the texture id that was returned to us
-                let texture = tex_handle_from_vec_color32(ctx, "sinewave",srgba, [PIC_WIDTH as usize,PIC_HEIGHT as usize]);
-                ui.add(Image::new(texture.id(), texture.size_vec2()));
+                if let Some(texture) = &texture {
+                    //Draw sine wave texture
+                    ui.add(Image::new(texture.id(), texture.size_vec2()));
+                    // repaint
+                    ctx.request_repaint();
+                }
                 ui.separator();
                 ui.label("A simple sine wave plotted onto a GL texture then blitted to an egui managed Image.");
                 ui.label(" ");
                 ui.text_edit_multiline(&mut test_str);
                 ui.label(" ");
-
                 ui.add(egui::Slider::new(&mut amplitude, 0.0..=50.0).text("Amplitude"));
                 ui.label(" ");
                 if ui.button("Quit").on_hover_cursor(egui::CursorIcon::PointingHand).clicked() {
@@ -116,27 +128,28 @@ fn main() {
             });
         });
 
-        state.fuse_output(&mut win, egui_output.platform_output);
+        if egui_output.needs_repaint || state.window_resized() {
+            state.fuse_output(&mut win, egui_output.platform_output);
+            let meshes = egui_ctx.tessellate(egui_output.shapes);
+            painter.paint_and_update_textures(
+                state.canvas_size,
+                state.pixels_per_point(),
+                &meshes,
+                &egui_output.textures_delta,
+            );
 
-        let meshes = egui_ctx.tessellate(egui_output.shapes);
+            win.swap_buffers();
+            win.flush();
+            app::awake();
+        }
 
-        painter.paint_and_update_textures(
-            state.canvas_size,
-            state.pixels_per_point(),
-            &meshes,
-            &egui_output.textures_delta,
-        );
-
-        win.swap_buffers();
-        win.flush();
-        app::sleep(0.006);
-        app::awake();
         if quit {
             break;
         }
     }
 
     triangle.free(painter.gl().as_ref());
+    painter.destroy();
 }
 
 fn draw_background<GL: glow::HasContext>(gl: &GL) {

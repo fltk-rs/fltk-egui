@@ -40,18 +40,14 @@ fn main() {
     main_win.show();
     gl_win.make_current();
 
-    //Init backend
+    // Init backend
     let (mut painter, egui_state) = egui_backend::with_fltk(&mut gl_win);
-
-    //Init egui ctx
-    let egui_ctx = egui::Context::default();
-
     let state = Rc::from(RefCell::from(egui_state));
 
     main_win.handle({
         let state = state.clone();
         let mut w = gl_win.clone();
-        move |_, ev| match ev {
+        move |double_win, ev| match ev {
             enums::Event::Push
             | enums::Event::Released
             | enums::Event::KeyDown
@@ -61,6 +57,9 @@ fn main() {
             | enums::Event::Move
             | enums::Event::Drag => {
                 // Using "if let ..." for safety.
+                if double_win.damage() {
+                    double_win.clear_damage();
+                }
                 if let Ok(mut state) = state.try_borrow_mut() {
                     state.fuse_input(&mut w, ev);
                     true
@@ -75,6 +74,7 @@ fn main() {
     // Set visual scale or egui display scaling
     state.borrow_mut().set_visual_scale(1.5);
 
+    let egui_ctx = egui::Context::default();
     let start_time = Instant::now();
     let mut name = String::new();
     let mut age: i32 = 0;
@@ -112,26 +112,28 @@ fn main() {
             });
         });
 
-        state.fuse_output(&mut gl_win, egui_output.platform_output);
+        if egui_output.needs_repaint || state.window_resized() {
+            state.fuse_output(&mut gl_win, egui_output.platform_output);
+            let meshes = egui_ctx.tessellate(egui_output.shapes);
 
-        let meshes = egui_ctx.tessellate(egui_output.shapes);
+            painter.paint_and_update_textures(
+                state.canvas_size,
+                state.pixels_per_point(),
+                &meshes,
+                &egui_output.textures_delta,
+            );
 
-        //Draw egui texture
-        painter.paint_and_update_textures(
-            state.canvas_size,
-            state.pixels_per_point(),
-            &meshes,
-            &egui_output.textures_delta,
-        );
+            gl_win.swap_buffers();
+            gl_win.flush();
+            app::awake();
+        }
 
-        gl_win.swap_buffers();
-        gl_win.flush();
-        app::sleep(0.006);
-        app::awake();
         if quit {
             break;
         }
     }
+
+    painter.destroy();
 }
 
 fn draw_background<GL: glow::HasContext>(gl: &GL) {

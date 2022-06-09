@@ -1,4 +1,5 @@
 ## Unreleased
+* Update examples
 * Remove gl in favor of painter.gl()
 
 ## 0.7.1 - 2022-05-10
