@@ -1,5 +1,7 @@
 ## Unreleased
 * Update examples
+* Replace tex_handle_from_* with egui::TextureHandle::from_* (use trait TextureHandleExt required)
+* Add TextureHandleExt and ColorImageExt
 * Remove gl in favor of painter.gl()
 
 ## 0.7.1 - 2022-05-10
