@@ -1,7 +1,8 @@
 use egui_backend::{
     egui::{Color32, ColorImage, Image, TextureHandle},
+    egui_glow::glow,
     fltk::{enums::*, prelude::*, *},
-    glow, ColorImageExt, TextureHandleExt,
+    ColorImageExt, TextureHandleExt,
 };
 
 use fltk_egui as egui_backend;
@@ -100,11 +101,11 @@ fn main() {
                     Some(texture) => {
                         // and then set new color image.
                         let new_color_image = ColorImage::from_vec_color32(texture.size(), srgba);
-                        texture.set(new_color_image);
+                        texture.set(new_color_image, egui::TextureFilter::Linear);
                     }
                     _ => {
                         // We just need to Initialize egui::TextureHandle and create texture id once.
-                        let new_texture = TextureHandle::from_vec_color32(ctx, "sinewave", [PIC_WIDTH as usize, PIC_HEIGHT as usize], srgba);
+                        let new_texture = TextureHandle::from_vec_color32(ctx, "sinewave", [PIC_WIDTH as usize, PIC_HEIGHT as usize], srgba, egui::TextureFilter::Linear);
                         texture = Some(new_texture);
                     }
                 }
@@ -128,7 +129,7 @@ fn main() {
             });
         });
 
-        if egui_output.needs_repaint || state.window_resized() {
+        if egui_output.repaint_after.is_zero() || state.window_resized() {
             state.fuse_output(&mut win, egui_output.platform_output);
             let meshes = egui_ctx.tessellate(egui_output.shapes);
             painter.paint_and_update_textures(
@@ -156,5 +157,6 @@ fn draw_background<GL: glow::HasContext>(gl: &GL) {
     unsafe {
         gl.clear_color(0.6, 0.3, 0.3, 1.0);
         gl.clear(glow::COLOR_BUFFER_BIT);
+        gl.clear(glow::DEPTH_BUFFER_BIT);
     }
 }

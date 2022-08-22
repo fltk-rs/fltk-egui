@@ -1,7 +1,7 @@
 use egui_backend::{
     egui,
+    egui_glow::glow,
     fltk::{enums::*, prelude::*, *},
-    glow,
 };
 
 use egui_demo_lib::DemoWindows;
@@ -15,8 +15,14 @@ const SCREEN_HEIGHT: u32 = 600;
 
 fn main() {
     let fltk_app = app::App::default();
-    let mut win = window::GlWindow::new(100, 100, SCREEN_WIDTH as _, SCREEN_HEIGHT as _, None)
-        .center_screen();
+    let mut win = window::GlWindow::new(
+        100,
+        100,
+        SCREEN_WIDTH as _,
+        SCREEN_HEIGHT as _,
+        Some("Demo window"),
+    )
+    .center_screen();
     win.set_mode(Mode::Opengl3);
     win.end();
     win.make_resizable(true);
@@ -70,7 +76,7 @@ fn run_egui(fltk_app: App, mut win: GlutWindow, demo: DemoWindows) {
             demo_windows.ui(&ctx);
         });
 
-        if egui_output.needs_repaint || state.window_resized() {
+        if egui_output.repaint_after.is_zero() || state.window_resized() {
             //Draw egui texture
             state.fuse_output(&mut win, egui_output.platform_output);
             let meshes = egui_ctx.tessellate(egui_output.shapes);
@@ -93,5 +99,6 @@ fn draw_background<GL: glow::HasContext>(gl: &GL) {
     unsafe {
         gl.clear_color(0.6, 0.3, 0.3, 1.0);
         gl.clear(glow::COLOR_BUFFER_BIT);
+        gl.clear(glow::DEPTH_BUFFER_BIT);
     }
 }

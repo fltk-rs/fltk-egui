@@ -1,4 +1,5 @@
 ## Unreleased
+* Update egui 0.19
 * Update examples
 * Replace tex_handle_from_* with egui::TextureHandle::from_* (use trait TextureHandleExt required)
 * Add TextureHandleExt and ColorImageExt

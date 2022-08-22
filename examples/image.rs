@@ -1,7 +1,8 @@
 use egui_backend::{
     egui::{self, Label},
+    egui_glow::glow,
     fltk::{prelude::*, *},
-    glow, EguiImageConvertible, EguiSvgConvertible,
+    EguiImageConvertible, EguiSvgConvertible,
 };
 use fltk::{
     enums::Mode,
@@ -51,11 +52,11 @@ fn main() {
 
     let retained_egui_image = JpegImage::load("screenshots/egui.jpg")
         .unwrap()
-        .egui_image("egui.jpg")
+        .egui_image("egui.jpg", egui::TextureFilter::Linear)
         .unwrap();
     let retained_egui_image_svg = SvgImage::load("screenshots/fingerprint.svg")
         .unwrap()
-        .egui_svg_image("fingerprint.svg")
+        .egui_svg_image("fingerprint.svg", egui::TextureFilter::Linear)
         .unwrap();
 
     let egui_ctx = egui::Context::default();
@@ -87,7 +88,7 @@ fn main() {
             });
         });
 
-        if egui_output.needs_repaint || state.window_resized() {
+        if egui_output.repaint_after.is_zero() || state.window_resized() {
             state.fuse_output(&mut win, egui_output.platform_output);
             let meshes = egui_ctx.tessellate(egui_output.shapes);
 
@@ -115,5 +116,6 @@ fn draw_background<GL: glow::HasContext>(gl: &GL) {
     unsafe {
         gl.clear_color(0.6, 0.3, 0.3, 1.0);
         gl.clear(glow::COLOR_BUFFER_BIT);
+        gl.clear(glow::DEPTH_BUFFER_BIT);
     }
 }
