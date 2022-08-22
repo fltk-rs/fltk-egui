@@ -1,7 +1,7 @@
 use egui_backend::{
     egui,
+    egui_glow::glow,
     fltk::{prelude::*, *},
-    glow,
 };
 use fltk::enums::Mode;
 use fltk_egui as egui_backend;

@@ -1,7 +1,8 @@
 use egui_backend::{
     egui::{self, Label},
+    egui_glow::glow,
     fltk::{prelude::*, *},
-    glow, EguiImageConvertible, EguiSvgConvertible,
+    EguiImageConvertible, EguiSvgConvertible,
 };
 use fltk::{
     enums::Mode,

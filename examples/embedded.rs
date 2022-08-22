@@ -1,7 +1,7 @@
 use egui_backend::{
     egui,
+    egui_glow::glow,
     fltk::{enums::*, prelude::*, *},
-    glow,
 };
 use fltk_egui as egui_backend;
 use std::rc::Rc;

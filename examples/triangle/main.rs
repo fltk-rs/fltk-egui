@@ -1,7 +1,8 @@
 use egui_backend::{
     egui::{Color32, ColorImage, Image, TextureHandle},
+    egui_glow::glow,
     fltk::{enums::*, prelude::*, *},
-    glow, ColorImageExt, TextureHandleExt,
+    ColorImageExt, TextureHandleExt,
 };
 
 use fltk_egui as egui_backend;

@@ -4,9 +4,8 @@
 
 use egui_backend::{
     cast_slice,
-    glow::{HasContext, Program, Shader},
+    egui_glow::glow::{self, HasContext, Program, Shader},
 };
-use egui_glow::glow;
 use fltk_egui as egui_backend;
 use std::str;
 
