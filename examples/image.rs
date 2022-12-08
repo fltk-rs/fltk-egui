@@ -52,11 +52,11 @@ fn main() {
 
     let retained_egui_image = JpegImage::load("screenshots/egui.jpg")
         .unwrap()
-        .egui_image("egui.jpg", egui::TextureFilter::Linear)
+        .egui_image("egui.jpg", egui::TextureOptions::LINEAR)
         .unwrap();
     let retained_egui_image_svg = SvgImage::load("screenshots/fingerprint.svg")
         .unwrap()
-        .egui_svg_image("fingerprint.svg", egui::TextureFilter::Linear)
+        .egui_svg_image("fingerprint.svg", egui::TextureOptions::LINEAR)
         .unwrap();
 
     let egui_ctx = egui::Context::default();

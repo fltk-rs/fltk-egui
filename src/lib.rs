@@ -25,7 +25,7 @@ pub fn with_fltk(win: &mut GlWindow) -> (Painter, EguiState) {
     app::set_screen_scale(win.screen_num(), 1.);
     app::keyboard_screen_scaling(false);
     let gl = unsafe { glow::Context::from_loader_function(|s| win.get_proc_address(s) as _) };
-    let painter = Painter::new(Arc::from(gl), None, "")
+    let painter = Painter::new(Arc::from(gl), "", None)
         .unwrap_or_else(|error| panic!("some OpenGL error occurred {}\n", error));
     let max_texture_side = painter.max_texture_side();
     (painter, EguiState::new(&win, max_texture_side))
@@ -449,7 +449,7 @@ where
     fn egui_image(
         self,
         debug_name: &str,
-        filter: egui::TextureFilter,
+        options: egui::TextureOptions,
     ) -> Result<RetainedEguiImage, FltkError>;
 }
 
@@ -461,7 +461,7 @@ where
     fn egui_image(
         self,
         debug_name: &str,
-        filter: egui::TextureFilter,
+        options: egui::TextureOptions,
     ) -> Result<RetainedEguiImage, FltkError> {
         let size = [self.data_w() as usize, self.data_h() as usize];
         let color_image = egui::ColorImage::from_rgba_unmultiplied(
@@ -475,7 +475,7 @@ where
         Ok(RetainedEguiImage::from_color_image(
             debug_name,
             color_image,
-            filter,
+            options,
         ))
     }
 }
@@ -484,7 +484,7 @@ pub trait EguiSvgConvertible {
     fn egui_svg_image(
         self,
         debug_name: &str,
-        filter: egui::TextureFilter,
+        options: egui::TextureOptions,
     ) -> Result<RetainedEguiImage, FltkError>;
 }
 
@@ -493,7 +493,7 @@ impl EguiSvgConvertible for fltk::image::SvgImage {
     fn egui_svg_image(
         mut self,
         debug_name: &str,
-        filter: egui::TextureFilter,
+        options: egui::TextureOptions,
     ) -> Result<RetainedEguiImage, FltkError> {
         self.normalize();
         let size = [self.data_w() as usize, self.data_h() as usize];
@@ -508,7 +508,7 @@ impl EguiSvgConvertible for fltk::image::SvgImage {
         Ok(RetainedEguiImage::from_color_image(
             debug_name,
             color_image,
-            filter,
+            options,
         ))
     }
 }
@@ -552,7 +552,7 @@ pub trait TextureHandleExt {
         debug_name: &str,
         size: [usize; 2],
         vec: Vec<u8>,
-        filter: egui::TextureFilter,
+        options: egui::TextureOptions,
     ) -> egui::TextureHandle;
 
     fn from_u8_slice(
@@ -560,7 +560,7 @@ pub trait TextureHandleExt {
         debug_name: &str,
         size: [usize; 2],
         slice: &[u8],
-        filter: egui::TextureFilter,
+        options: egui::TextureOptions,
     ) -> egui::TextureHandle;
 
     fn from_vec_color32(
@@ -568,7 +568,7 @@ pub trait TextureHandleExt {
         debug_name: &str,
         size: [usize; 2],
         vec: Vec<egui::Color32>,
-        filter: egui::TextureFilter,
+        options: egui::TextureOptions,
     ) -> egui::TextureHandle;
 
     fn from_color32_slice(
@@ -576,7 +576,7 @@ pub trait TextureHandleExt {
         debug_name: &str,
         size: [usize; 2],
         slice: &[egui::Color32],
-        filter: egui::TextureFilter,
+        options: egui::TextureOptions,
     ) -> egui::TextureHandle;
 }
 
@@ -586,11 +586,11 @@ impl TextureHandleExt for egui::TextureHandle {
         debug_name: &str,
         size: [usize; 2],
         vec: Vec<u8>,
-        filter: egui::TextureFilter,
+        options: egui::TextureOptions,
     ) -> Self {
         let color_image = egui::ColorImage::from_rgba_unmultiplied(size, &vec);
         drop(vec);
-        ctx.load_texture(debug_name, color_image, filter)
+        ctx.load_texture(debug_name, color_image, options)
     }
 
     fn from_u8_slice(
@@ -598,10 +598,10 @@ impl TextureHandleExt for egui::TextureHandle {
         debug_name: &str,
         size: [usize; 2],
         slice: &[u8],
-        filter: egui::TextureFilter,
+        options: egui::TextureOptions,
     ) -> Self {
         let color_image = egui::ColorImage::from_rgba_unmultiplied(size, slice);
-        ctx.load_texture(debug_name, color_image, filter)
+        ctx.load_texture(debug_name, color_image, options)
     }
 
     fn from_vec_color32(
@@ -609,7 +609,7 @@ impl TextureHandleExt for egui::TextureHandle {
         debug_name: &str,
         size: [usize; 2],
         vec: Vec<egui::Color32>,
-        filter: egui::TextureFilter,
+        options: egui::TextureOptions,
     ) -> Self {
         let mut pixels: Vec<u8> = Vec::with_capacity(vec.len() * 4);
         vec.into_iter().for_each(|x| {
@@ -619,7 +619,7 @@ impl TextureHandleExt for egui::TextureHandle {
             pixels.push(x[3]);
         });
         let color_image = egui::ColorImage::from_rgba_unmultiplied(size, pixels.as_slice());
-        ctx.load_texture(debug_name, color_image, filter)
+        ctx.load_texture(debug_name, color_image, options)
     }
 
     fn from_color32_slice(
@@ -627,7 +627,7 @@ impl TextureHandleExt for egui::TextureHandle {
         debug_name: &str,
         size: [usize; 2],
         slice: &[egui::Color32],
-        filter: egui::TextureFilter,
+        options: egui::TextureOptions,
     ) -> Self {
         let mut pixels: Vec<u8> = Vec::with_capacity(slice.len() * 4);
         slice.into_iter().for_each(|x| {
@@ -637,6 +637,6 @@ impl TextureHandleExt for egui::TextureHandle {
             pixels.push(x[3]);
         });
         let color_image = egui::ColorImage::from_rgba_unmultiplied(size, pixels.as_slice());
-        ctx.load_texture(debug_name, color_image, filter)
+        ctx.load_texture(debug_name, color_image, options)
     }
 }
