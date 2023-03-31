@@ -275,6 +275,7 @@ pub fn input_to_egui(
                     key,
                     pressed: true,
                     modifiers: state.input.modifiers,
+                    repeat: false,
                 });
 
                 if state.input.modifiers.command && key == Key::C {
@@ -288,6 +289,7 @@ pub fn input_to_egui(
                         key,
                         pressed: false,
                         modifiers: state.input.modifiers,
+                        repeat: false,
                     })
                 }
             }
