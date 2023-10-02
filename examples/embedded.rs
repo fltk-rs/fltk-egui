@@ -33,7 +33,7 @@ fn main() {
     slider.set_slider_size(0.20);
     slider.set_color(Color::Blue.inactive());
     slider.set_selection_color(Color::Red);
-    col.set_size(&mut slider, 20);
+    col.fixed(&mut slider, 20);
     col.end();
     main_win.end();
     main_win.make_resizable(true);

@@ -1,6 +1,6 @@
 [package]
 name = "fltk-egui"
-version = "0.11.0"
+version = "0.12.0"
 edition = "2021"
 authors = ["MoAlyousef <mohammed.alyousef@neurosrg.com>", "Adia Robbie <adyaro37@gmail.com>"]
 description = "FLTK backend for egui"
@@ -13,15 +13,15 @@ license = "MIT"
 rust-version = "1.65"
 
 [dependencies]
-egui = { version = "0.22" }
-egui_glow = { version = "0.22", default-features = false }
+egui = { version = "0.23" }
+egui_glow = { version = "0.23", default-features = false }
 arboard = { version = "3", default-features = false }
-fltk = { version = "1.4", features = ["enable-glwindow"] }
+fltk = { version = "1.4.12", features = ["enable-glwindow"] }
 
 # for the demo_windows example
 [dev-dependencies]
-egui_demo_lib = { version = "0.22" }
-three-d = { version = "0.15", default-features = false }
+egui_demo_lib = { version = "0.23" }
+three-d = { version = "0.16", default-features = false }
 
 [features]
 wayland = ["fltk/use-wayland"]

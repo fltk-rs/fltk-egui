@@ -2,6 +2,7 @@
 // slightly modified for fltk image and fltk svg image
 
 use egui::ColorImage;
+use egui::load::SizedTexture;
 use fltk::{
     enums,
     image::SvgImage,
@@ -177,6 +178,6 @@ impl RetainedEguiImage {
         // We need to convert the SVG to a texture to display it:
         // Future improvement: tell backend to do mip-mapping of the image to
         // make it look smoother when downsized.
-        ui.image(self.texture_id(ui.ctx()), desired_size)
+        ui.image(SizedTexture { id: self.texture_id(ui.ctx()), size: desired_size })
     }
 }

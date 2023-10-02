@@ -1,5 +1,5 @@
 use egui_backend::{
-    egui::{Color32, ColorImage, Image, TextureHandle},
+    egui::{Color32, ColorImage, Image, TextureHandle, load::SizedTexture},
     egui_glow::glow,
     fltk::{enums::*, prelude::*, *},
     ColorImageExt, TextureHandleExt,
@@ -112,7 +112,7 @@ fn main() {
 
                 if let Some(texture) = &texture {
                     //Draw sine wave texture
-                    ui.add(Image::new(texture.id(), texture.size_vec2()));
+                    ui.add(Image::new(SizedTexture::new(texture.id(), texture.size_vec2())));
                     // repaint
                     ctx.request_repaint();
                 }
