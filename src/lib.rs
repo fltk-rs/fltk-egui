@@ -1,15 +1,11 @@
 #![doc = include_str!("../README.md")]
 #![warn(clippy::all)]
 
-use std::{sync::Arc, time::Instant};
+use std::{rc::Rc, time::Instant};
 
-// Re-export dependencies.
-pub use egui;
 use egui::{pos2, vec2, CursorIcon, Event, Key, Modifiers, Pos2, RawInput, Rect, Vec2};
-pub use egui_glow;
 use egui_glow::{glow, Painter};
-pub use egui_image::RetainedEguiImage;
-pub use fltk;
+use egui_image::RetainedEguiImage;
 use fltk::{
     app, enums,
     prelude::{FltkError, ImageExt, WidgetExt, WindowExt},
@@ -21,11 +17,11 @@ mod egui_image;
 use clipboard::Clipboard;
 
 /// Construct the backend.
-pub fn with_fltk(win: &mut GlWindow) -> (Painter, EguiState) {
+pub fn init(win: &mut GlWindow) -> (Painter, EguiState) {
     app::set_screen_scale(win.screen_num(), 1.);
     app::keyboard_screen_scaling(false);
     let gl = unsafe { glow::Context::from_loader_function(|s| win.get_proc_address(s) as _) };
-    let painter = Painter::new(Arc::from(gl), "", None)
+    let painter = Painter::new(Rc::from(gl), "", None)
         .unwrap_or_else(|error| panic!("some OpenGL error occurred {}\n", error));
     let max_texture_side = painter.max_texture_side();
     (painter, EguiState::new(&win, max_texture_side))
@@ -94,7 +90,7 @@ impl EguiState {
             fuse_cursor: FusedCursor::new(),
             input: egui::RawInput {
                 screen_rect: Some(screen_rect),
-                pixels_per_point: Some(ppu),
+                // pixels_per_point: Some(ppu),
                 max_texture_side: Some(max_texture_side),
                 ..Default::default()
             },
@@ -109,12 +105,12 @@ impl EguiState {
 
     pub fn take_input(&mut self) -> egui::RawInput {
         self.input.max_texture_side = Some(self.max_texture_side);
-        let pixels_per_point = self.input.pixels_per_point;
+        // let pixels_per_point = self.input.pixels_per_point;
         let take = self.input.take();
-        self.input.pixels_per_point = pixels_per_point;
-        if let Some(ppp) = pixels_per_point {
-            self._pixels_per_point = ppp;
-        }
+        // self.input.pixels_per_point = pixels_per_point;
+        // if let Some(ppp) = pixels_per_point {
+        //     self._pixels_per_point = ppp;
+        // }
         take
     }
 
@@ -159,7 +155,7 @@ impl EguiState {
     /// Set visual scale, e.g: 0.8, 1.5, 2.0 .etc (default is 1.0)
     pub fn set_visual_scale(&mut self, size: f32) {
         // have to be setted the pixels_per_point of both the inner (input) and the state.
-        self.input.pixels_per_point = Some(size);
+        // self.input.pixels_per_point = Some(size);
         self._pixels_per_point = size;
 
         // resize rect with canvas.

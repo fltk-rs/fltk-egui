@@ -2,22 +2,19 @@
 // based on the example from:
 // https://github.com/brendanzab/gl-rs/blob/master/gl/examples/triangle.rs
 
-use egui_backend::{
-    cast_slice,
-    egui_glow::glow::{self, HasContext, Program, Shader},
-};
-use fltk_egui as egui_backend;
+use fltk_egui::cast_slice;
+use egui_glow::glow::{self, HasContext, Program, Shader};
 use std::str;
 
 const VS_SRC: &str = "
-#version 150
+#version 140
 in vec2 position;
 void main() {
     gl_Position = vec4(position, 0.0, 1.0);
 }";
 
 const FS_SRC: &str = "
-#version 150
+#version 140
 out vec4 out_color;
 void main() {
     out_color = vec4(1.0, 1.0, 1.0, 1.0);

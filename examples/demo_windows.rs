@@ -1,12 +1,7 @@
-use egui_backend::{
-    egui,
-    egui_glow::glow,
-    fltk::{enums::*, prelude::*, *},
-};
-
+use egui;
+use egui_glow::glow;
 use egui_demo_lib::DemoWindows;
-use fltk::{app::App, window::GlutWindow};
-use fltk_egui as egui_backend;
+use fltk::{app, *, prelude::*, window::GlutWindow};
 use std::rc::Rc;
 use std::{cell::RefCell, time::Instant};
 
@@ -23,7 +18,7 @@ fn main() {
         Some("Demo window"),
     )
     .center_screen();
-    win.set_mode(Mode::Opengl3);
+    win.set_mode(enums::Mode::Opengl3);
     win.end();
     win.make_resizable(true);
     win.show();
@@ -33,9 +28,9 @@ fn main() {
     run_egui(fltk_app, win, demo);
 }
 
-fn run_egui(fltk_app: App, mut win: GlutWindow, demo: DemoWindows) {
+fn run_egui(fltk_app: app::App, mut win: GlutWindow, demo: DemoWindows) {
     // Init backend
-    let (mut painter, egui_state) = egui_backend::with_fltk(&mut win);
+    let (mut painter, egui_state) = fltk_egui::init(&mut win);
     let state = Rc::new(RefCell::new(egui_state));
 
     win.handle({
@@ -76,10 +71,10 @@ fn run_egui(fltk_app: App, mut win: GlutWindow, demo: DemoWindows) {
             demo_windows.ui(&ctx);
         });
 
-        if egui_output.repaint_after.is_zero() || state.window_resized() {
+        if egui_ctx.has_requested_repaint() || state.window_resized() {
             //Draw egui texture
             state.fuse_output(&mut win, egui_output.platform_output);
-            let meshes = egui_ctx.tessellate(egui_output.shapes);
+            let meshes = egui_ctx.tessellate(egui_output.shapes, win.pixels_per_unit());
             painter.paint_and_update_textures(
                 state.canvas_size,
                 state.pixels_per_point(),

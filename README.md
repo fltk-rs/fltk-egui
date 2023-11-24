@@ -22,7 +22,9 @@ Add to your Cargo.toml:
 
 ```toml
 [dependencies]
-fltk-egui = "0.8" # targets egui 0.19
+fltk-egui = "0.8" # targets egui 0.24
+egui_glow = "0.24"
+egui = "0.24"
 ```
 
 On wayland desktop enable feature:
@@ -30,6 +32,8 @@ On wayland desktop enable feature:
 ```toml
 [dependencies]
 fltk-egui = { version = "0.8",  features = ["wayland"] }
+egui_glow = "0.24"
+egui = "0.24"
 ```
 
 Note: on xwayland based desktop (like gnome 41+) doesn't require to enable the
@@ -48,7 +52,6 @@ To run the examples, just run:
 
 ```
 cargo run --example basic
-cargo run --example custom3d
 cargo run --example demo_windows
 cargo run --example embedded
 cargo run --example triangle

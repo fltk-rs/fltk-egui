@@ -1,11 +1,7 @@
-use egui_backend::{
-    egui::{Color32, ColorImage, Image, TextureHandle, load::SizedTexture},
-    egui_glow::glow,
-    fltk::{enums::*, prelude::*, *},
-    ColorImageExt, TextureHandleExt,
-};
-
-use fltk_egui as egui_backend;
+use egui::{Color32, ColorImage, Image, TextureHandle, load::SizedTexture};
+use egui_glow::glow;
+use fltk_egui::{TextureHandleExt, ColorImageExt};
+use fltk::{enums::*, prelude::*, *};
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Instant;
@@ -20,6 +16,7 @@ fn main() {
     let fltk_app = app::App::default();
     let mut win = window::GlWindow::new(100, 100, SCREEN_WIDTH as _, SCREEN_HEIGHT as _, None)
         .center_screen();
+    win.set_mode(Mode::Opengl3);        
     win.set_mode(Mode::MultiSample);
     win.end();
     win.make_resizable(true);
@@ -27,7 +24,7 @@ fn main() {
     win.make_current();
 
     // Init backend
-    let (mut painter, egui_state) = egui_backend::with_fltk(&mut win);
+    let (mut painter, egui_state) = fltk_egui::init(&mut win);
     let state = Rc::from(RefCell::from(egui_state));
 
     win.handle({
@@ -55,7 +52,7 @@ fn main() {
     });
 
     // We will draw a crisp white triangle using Glow OpenGL.
-    let triangle = triangle::Triangle::new(painter.gl().as_ref());
+    let triangle = crate::triangle::Triangle::new(painter.gl().as_ref());
 
     // Some variables to help draw a sine wave
     let mut sine_shift = 0f32;
@@ -129,9 +126,9 @@ fn main() {
             });
         });
 
-        if egui_output.repaint_after.is_zero() || state.window_resized() {
+        if egui_ctx.has_requested_repaint() || state.window_resized() {
             state.fuse_output(&mut win, egui_output.platform_output);
-            let meshes = egui_ctx.tessellate(egui_output.shapes);
+            let meshes = egui_ctx.tessellate(egui_output.shapes, win.pixels_per_unit());
             painter.paint_and_update_textures(
                 state.canvas_size,
                 state.pixels_per_point(),

@@ -1,9 +1,6 @@
-use egui_backend::{
-    egui,
-    egui_glow::glow,
-    fltk::{enums::*, prelude::*, *},
-};
-use fltk_egui as egui_backend;
+use egui;
+use egui_glow::glow;
+use fltk::{enums::*, prelude::*, *};
 use std::rc::Rc;
 use std::{cell::RefCell, time::Instant};
 
@@ -41,7 +38,7 @@ fn main() {
     gl_win.make_current();
 
     // Init backend
-    let (mut painter, egui_state) = egui_backend::with_fltk(&mut gl_win);
+    let (mut painter, egui_state) = fltk_egui::init(&mut gl_win);
     let state = Rc::from(RefCell::from(egui_state));
 
     main_win.handle({
@@ -112,9 +109,9 @@ fn main() {
             });
         });
 
-        if egui_output.repaint_after.is_zero() || state.window_resized() {
+        if egui_ctx.has_requested_repaint() || state.window_resized() {
             state.fuse_output(&mut gl_win, egui_output.platform_output);
-            let meshes = egui_ctx.tessellate(egui_output.shapes);
+            let meshes = egui_ctx.tessellate(egui_output.shapes, gl_win.pixels_per_unit());
 
             painter.paint_and_update_textures(
                 state.canvas_size,

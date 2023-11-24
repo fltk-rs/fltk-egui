@@ -1,14 +1,13 @@
-use egui_backend::{
-    egui::{self, Label},
-    egui_glow::glow,
-    fltk::{prelude::*, *},
+use fltk_egui::{
     EguiImageConvertible, EguiSvgConvertible,
 };
+use egui::{self, Label};
+use egui_glow::glow;
 use fltk::{
-    enums::Mode,
+    *, 
+    prelude::*,
     image::{JpegImage, SvgImage},
 };
-use fltk_egui as egui_backend;
 use std::rc::Rc;
 use std::{cell::RefCell, time::Instant};
 const SCREEN_WIDTH: u32 = 800;
@@ -17,14 +16,14 @@ const SCREEN_HEIGHT: u32 = 600;
 fn main() {
     let fltk_app = app::App::default();
     let mut win = window::GlWindow::new(100, 100, SCREEN_WIDTH as _, SCREEN_HEIGHT as _, None);
-    win.set_mode(Mode::Opengl3);
+    win.set_mode(enums::Mode::Opengl3);
     win.end();
     win.make_resizable(true);
     win.show();
     win.make_current();
 
     // Init backend
-    let (mut painter, egui_state) = egui_backend::with_fltk(&mut win);
+    let (mut painter, egui_state) = fltk_egui::init(&mut win);
     let state = Rc::from(RefCell::from(egui_state));
 
     win.handle({
@@ -88,9 +87,9 @@ fn main() {
             });
         });
 
-        if egui_output.repaint_after.is_zero() || state.window_resized() {
+        if egui_ctx.has_requested_repaint() || state.window_resized() {
             state.fuse_output(&mut win, egui_output.platform_output);
-            let meshes = egui_ctx.tessellate(egui_output.shapes);
+            let meshes = egui_ctx.tessellate(egui_output.shapes, win.pixels_per_unit());
 
             painter.paint_and_update_textures(
                 state.canvas_size,
