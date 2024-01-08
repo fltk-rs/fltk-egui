@@ -1,7 +1,7 @@
 #![doc = include_str!("../README.md")]
 #![warn(clippy::all)]
 
-use std::{rc::Rc, time::Instant};
+use std::{sync::Arc, time::Instant};
 
 use egui::{pos2, vec2, CursorIcon, Event, Key, Modifiers, Pos2, RawInput, Rect, Vec2};
 use egui_glow::{glow, Painter};
@@ -21,7 +21,7 @@ pub fn init(win: &mut GlWindow) -> (Painter, EguiState) {
     app::set_screen_scale(win.screen_num(), 1.);
     app::keyboard_screen_scaling(false);
     let gl = unsafe { glow::Context::from_loader_function(|s| win.get_proc_address(s) as _) };
-    let painter = Painter::new(Rc::from(gl), "", None)
+    let painter = Painter::new(Arc::from(gl), "", None)
         .unwrap_or_else(|error| panic!("some OpenGL error occurred {}\n", error));
     let max_texture_side = painter.max_texture_side();
     (painter, EguiState::new(&win, max_texture_side))
@@ -269,6 +269,7 @@ pub fn input_to_egui(
 
                 state.input.events.push(Event::Key {
                     key,
+                    physical_key: None,
                     pressed: true,
                     modifiers: state.input.modifiers,
                     repeat: false,
@@ -283,6 +284,7 @@ pub fn input_to_egui(
                 } else {
                     state.input.events.push(Event::Key {
                         key,
+                        physical_key: None,
                         pressed: false,
                         modifiers: state.input.modifiers,
                         repeat: false,
