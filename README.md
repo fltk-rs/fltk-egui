@@ -22,18 +22,18 @@ Add to your Cargo.toml:
 
 ```toml
 [dependencies]
-fltk-egui = "0.8" # targets egui 0.24
-egui_glow = "0.24"
-egui = "0.24"
+fltk-egui = "0.16" # targets egui 0.27
+egui_glow = "0.27"
+egui = "0.27"
 ```
 
 On wayland desktop enable feature:
 
 ```toml
 [dependencies]
-fltk-egui = { version = "0.8",  features = ["wayland"] }
-egui_glow = "0.24"
-egui = "0.24"
+fltk-egui = { version = "0.16",  features = ["wayland"] }
+egui_glow = "0.27"
+egui = "0.27"
 ```
 
 Note: on xwayland based desktop (like gnome 41+) doesn't require to enable the
