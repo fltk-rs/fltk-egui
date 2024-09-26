@@ -3,7 +3,7 @@
 
 use std::{sync::Arc, time::Instant};
 
-use egui::{pos2, vec2, CursorIcon, Event, Key, Modifiers, Pos2, RawInput, Rect, Vec2};
+use egui::{pos2, vec2, CursorIcon, Event, Key, Modifiers, MouseWheelUnit, Pos2, RawInput, Rect};
 use egui_glow::{glow, Painter};
 use egui_image::RetainedEguiImage;
 use fltk::{
@@ -21,7 +21,7 @@ pub fn init(win: &mut GlWindow) -> (Painter, EguiState) {
     app::set_screen_scale(win.screen_num(), 1.);
     app::keyboard_screen_scaling(false);
     let gl = unsafe { glow::Context::from_loader_function(|s| win.get_proc_address(s) as _) };
-    let painter = Painter::new(Arc::from(gl), "", None)
+    let painter = Painter::new(Arc::from(gl), "", None, false)
         .unwrap_or_else(|error| panic!("some OpenGL error occurred {}\n", error));
     let max_texture_side = painter.max_texture_side();
     (painter, EguiState::new(&win, max_texture_side))
@@ -294,49 +294,32 @@ pub fn input_to_egui(
         }
 
         enums::Event::MouseWheel => {
-            if app::is_event_ctrl() {
-                let zoom_factor = state.zoom_factor;
-                match app::event_dy() {
-                    app::MouseWheel::Up => {
-                        let delta = egui::vec2(1., -1.) * zoom_factor;
+            let keymod = app::event_state();
+            state.input.modifiers = Modifiers {
+                alt: (keymod & enums::EventState::Alt == enums::EventState::Alt),
+                ctrl: (keymod & enums::EventState::Ctrl == enums::EventState::Ctrl),
+                shift: (keymod & enums::EventState::Shift == enums::EventState::Shift),
+                mac_cmd: keymod & enums::EventState::Meta == enums::EventState::Meta,
 
-                        // Treat as zoom in:
-                        state
-                            .input
-                            .events
-                            .push(Event::Zoom((delta.y / 200.0).exp()));
-                    }
-                    app::MouseWheel::Down => {
-                        let delta = egui::vec2(-1., 1.) * zoom_factor;
-
-                        // Treat as zoom out:
-                        state
-                            .input
-                            .events
-                            .push(Event::Zoom((delta.y / 200.0).exp()));
-                    }
-                    _ => (),
-                }
-            } else {
-                let scroll_factor = state.scroll_factor;
-                match app::event_dy() {
-                    app::MouseWheel::Up => {
-                        state.input.events.push(Event::Scroll(Vec2 {
-                            x: 0.,
-                            y: -scroll_factor,
-                        }));
-                    }
-                    app::MouseWheel::Down => {
-                        state.input.events.push(Event::Scroll(Vec2 {
-                            x: 0.,
-                            y: scroll_factor,
-                        }));
-                    }
-                    _ => (),
-                }
-            }
+                //TOD: Test on both windows and mac
+                command: (keymod & enums::EventState::Command == enums::EventState::Command),
+            };
+            let negx = match app::event_dx() {
+                app::MouseWheel::Right => 1.,
+                app::MouseWheel::Left => -1.,
+                _ => 0.,
+            };
+            let negy = match app::event_dy() {
+                app::MouseWheel::Up => -1.,
+                app::MouseWheel::Down => 1.,
+                _ => 0.,
+            };
+            state.input.events.push(Event::MouseWheel {
+                unit: MouseWheelUnit::Line,
+                delta: vec2(1. * negx, 1. * negy) ,
+                modifiers: state.input.modifiers,
+            });
         }
-
         _ => {
             //dbg!(event);
         }
